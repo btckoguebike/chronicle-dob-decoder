@@ -1,0 +1,22 @@
+{
+    "__CHARACTER_SEGMENTATION_NAME__": "__角色名字__",
+    "TRC_001": "赛尔文",
+    "TRC_002": "埃尔德林",
+    "TRC_003": "莫尔丁",
+    "TRC_004": "泰勒斯",
+    "TRC_005": "达尼洛斯",
+    "TRC_006": "卡尔文",
+    "__CHARACTER_SEGMENTATION_ADJECTIVE__": "__角色描述__",
+    "TRC_010": "烈焰的",
+    "TRC_011": "辉夜的",
+    "TRC_012": "不朽的",
+    "TRC_013": "传奇的",
+    "TRC_014": "仙境的",
+    "TRC_015": "神圣的",
+    "TRC_016": "无尽的",
+    "__CHARACTER_SEGMENTATION_PROFESSION__": "__角色职业__",
+    "TRC_020": "战士",
+    "TRC_021": "刺客",
+    "TRC_022": "法师",
+    "TRC_023": "牧师"
+}

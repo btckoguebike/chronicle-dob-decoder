@@ -1,0 +1,15 @@
+{
+    "bytes": 1,
+    "schema": {
+        "simple": {
+            "occupied": 1,
+            "selector": "single",
+            "pool": {
+                "number_range": [
+                    0,
+                    30
+                ]
+            }
+        }
+    }
+}

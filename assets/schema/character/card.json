@@ -1,0 +1,53 @@
+{
+    "bytes": 14,
+    "schema": {
+        "variable": {
+            "number": {
+                "occupied": 2,
+                "selector": "double",
+                "pool": {
+                    "number_pool": [
+                        2,
+                        2,
+                        2,
+                        2,
+                        3,
+                        3
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "occupied": 2,
+                    "selector": "double",
+                    "pool": {
+                        "template_pool": [
+                            "TEC_001",
+                            "TEC_002"
+                        ]
+                    }
+                },
+                {
+                    "occupied": 2,
+                    "selector": "double",
+                    "pool": {
+                        "template_pool": [
+                            "TEC_001",
+                            "TEC_002"
+                        ]
+                    }
+                },
+                {
+                    "occupied": 2,
+                    "selector": "double",
+                    "pool": {
+                        "template_pool": [
+                            "TEC_001",
+                            "TEC_002"
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}
