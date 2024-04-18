@@ -28,11 +28,28 @@ pub fn main() {
     });
     character_mod.push_str("}");
 
+    // gnerate `story` module
+    let mut story_mod = String::from("pub mod story {");
+    ["character", "location", "date", "story"]
+        .into_iter()
+        .for_each(|file| {
+            let content = fs::read_to_string(format!("./assets/schema/story/{file}.json"))
+                .expect("read story_*.json")
+                .replace("\"", "\\\"")
+                .replace(" ", "")
+                .replace("\n", "");
+            story_mod.push_str(&format!(
+                "pub const {}: &str = \"{content}\";",
+                file.to_uppercase()
+            ));
+        });
+    story_mod.push_str("}");
+
     // generate `language` module
     let mut language_mod = String::from("pub mod language {");
     ["cn"].into_iter().for_each(|value| {
         let mut value_mod = format!("pub mod {value} {{");
-        ["trait_pool", "template_pool"]
+        ["trait_pool", "template_pool", "paragraph_pool"]
             .into_iter()
             .for_each(|file| {
                 let content = fs::read_to_string(format!("./assets/language/{value}/{file}.json"))
@@ -50,7 +67,8 @@ pub fn main() {
     });
     language_mod.push_str("}");
 
-    let file_content = String::from("#![allow(dead_code)]\n") + &character_mod + &language_mod;
+    let file_content =
+        String::from("#![allow(dead_code)]\n") + &character_mod + &story_mod + &language_mod;
     fs::write("./src/generated.rs", file_content).expect("write generated.rs");
     Command::new("rustfmt")
         .arg("./src/generated.rs")

@@ -38,6 +38,7 @@ casting_error!(
     pub enum Error {
         ParseLanguageTraitPoolError,
         ParseLanguageTemplatePoolError,
+        ParseLanguageParagraphPoolError,
         ParseSegmentError,
 
         RenderVariableNumberPoolError,

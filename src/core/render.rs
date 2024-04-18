@@ -12,6 +12,8 @@ use crate::{
     error::Error,
 };
 
+use super::decoder::VariablePatterns;
+
 static RENDER_DNA: Lazy<Mutex<Vec<u8>>> = Lazy::new(|| Mutex::new(vec![]));
 
 fn set_render_dna(hexed_dna: &str) -> Result<(), Error> {
@@ -172,6 +174,34 @@ pub trait Render: Serialize {
     }
 }
 
+fn render_variable(
+    mut variable: VariablePatterns,
+    segment_bytes: &mut Vec<u8>,
+) -> Result<Vec<String>, Error> {
+    let variable_occupied = variable.number.occupied as usize;
+    let number_bytes = segment_bytes
+        .splice(0..variable_occupied, vec![])
+        .collect::<Vec<_>>();
+    let number = match variable.number.pool {
+        Pool::NumberPool(pool) => {
+            PoolSelector::new(pool, number_bytes)?.select_by(variable.number.selector)?
+        }
+        Pool::NumberRange((v1, v2)) => {
+            PoolSelector::new_range(v1..=v2, number_bytes)?.select_by(variable.number.selector)?
+        }
+        _ => return Err(Error::RenderVariableNumberPoolError),
+    };
+    if number as usize > variable.patterns.len() {
+        return Err(Error::RenderPatternCountError);
+    }
+    (0..number)
+        .map(|_| {
+            let pattern = variable.patterns.remove(0);
+            PatternRender::new(pattern).render(segment_bytes)
+        })
+        .collect::<Result<Vec<_>, _>>()
+}
+
 pub fn segment_render<S>(segment: &Segment, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,
@@ -198,35 +228,21 @@ where
             })?;
             seq.end()
         }
-        Schema::Variable(mut variable) => {
-            let variable_occupied = variable.number.occupied as usize;
-            let number_bytes = segment_bytes
-                .splice(0..variable_occupied, vec![])
-                .collect::<Vec<_>>();
-            let number = match variable.number.pool {
-                Pool::NumberPool(pool) => PoolSelector::new(pool, number_bytes)
-                    .map_err(ser::Error::custom)?
-                    .select_by(variable.number.selector)
-                    .map_err(ser::Error::custom)?,
-                Pool::NumberRange((v1, v2)) => PoolSelector::new_range(v1..=v2, number_bytes)
-                    .map_err(ser::Error::custom)?
-                    .select_by(variable.number.selector)
-                    .map_err(ser::Error::custom)?,
-                _ => return Err(ser::Error::custom(Error::RenderVariableNumberPoolError)),
-            };
-            if number as usize > variable.patterns.len() {
-                return Err(ser::Error::custom(Error::RenderPatternCountError));
-            }
-            let template_render_results = (0..number)
-                .map(|_| {
-                    let pattern = variable.patterns.remove(0);
-                    PatternRender::new(pattern).render(&mut segment_bytes)
-                })
-                .collect::<Result<Vec<_>, _>>()
-                .map_err(ser::Error::custom)?;
-            let mut seq = serializer.serialize_seq(Some(template_render_results.len()))?;
-            for value in template_render_results {
+        Schema::Variable(variable) => {
+            let render_results =
+                render_variable(variable, &mut segment_bytes).map_err(ser::Error::custom)?;
+            let mut seq = serializer.serialize_seq(Some(render_results.len()))?;
+            for value in render_results {
                 seq.serialize_element(&value)?;
+            }
+            seq.end()
+        }
+        Schema::MultipleVariables(variables) => {
+            let mut seq = serializer.serialize_seq(Some(variables.len()))?;
+            for variable in variables.into_iter() {
+                let render_results =
+                    render_variable(variable, &mut segment_bytes).map_err(ser::Error::custom)?;
+                seq.serialize_element(&render_results)?;
             }
             seq.end()
         }

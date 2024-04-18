@@ -7,8 +7,7 @@ use spin::{lazy::Lazy, Mutex};
 
 use crate::{error::Error, generated};
 
-static TRAIT_POOL_RESOURCE: Lazy<Mutex<BTreeMap<String, String>>> =
-    Lazy::new(|| Default::default());
+static TEXT_POOL_RESOURCE: Lazy<Mutex<BTreeMap<String, String>>> = Lazy::new(|| Default::default());
 static TEMPLATE_POOL_RESOURCE: Lazy<Mutex<BTreeMap<String, Vec<TemplateInstruction>>>> =
     Lazy::new(|| Default::default());
 
@@ -18,15 +17,22 @@ pub enum Language {
 }
 
 pub fn set_decoder_language(language: Language) -> Result<(), Error> {
-    let (trait_pool, tempalte_pool) = match language {
+    let (trait_pool, tempalte_pool, paragraph_pool) = match language {
         Language::CN => (
             generated::language::cn::TRAIT_POOL,
             generated::language::cn::TEMPLATE_POOL,
+            generated::language::cn::PARAGRAPH_POOL,
         ),
         Language::EN => unimplemented!(),
     };
-    *TRAIT_POOL_RESOURCE.lock() =
-        serde_json::from_str(trait_pool).map_err(|_| Error::ParseLanguageTraitPoolError)?;
+    *TEXT_POOL_RESOURCE.lock() = {
+        let mut trait_resource: BTreeMap<String, String> =
+            serde_json::from_str(trait_pool).map_err(|_| Error::ParseLanguageTraitPoolError)?;
+        let paragraph_resource: BTreeMap<String, String> = serde_json::from_str(paragraph_pool)
+            .map_err(|_| Error::ParseLanguageParagraphPoolError)?;
+        trait_resource.extend(paragraph_resource);
+        trait_resource
+    };
     *TEMPLATE_POOL_RESOURCE.lock() =
         serde_json::from_str(tempalte_pool).map_err(|_| Error::ParseLanguageTemplatePoolError)?;
     Ok(())
@@ -87,6 +93,8 @@ pub enum Schema {
     Fixed(Vec<Pattern>),
     #[serde(alias = "variable")]
     Variable(VariablePatterns),
+    #[serde(alias = "multiple_variables")]
+    MultipleVariables(Vec<VariablePatterns>),
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -102,7 +110,7 @@ where
     let raw_trait_pool: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
     let trait_pool = raw_trait_pool
         .into_iter()
-        .filter_map(|v| TRAIT_POOL_RESOURCE.lock().get(&v).cloned())
+        .filter_map(|v| TEXT_POOL_RESOURCE.lock().get(&v).cloned())
         .collect();
     Ok(trait_pool)
 }

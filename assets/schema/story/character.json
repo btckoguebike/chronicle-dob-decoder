@@ -1,0 +1,102 @@
+{
+    "bytes": 6,
+    "schema": {
+        "multiple_variables": [
+            {
+                "number": {
+                    "occupied": 1,
+                    "selector": "single",
+                    "pool": {
+                        "number_pool": [
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1
+                        ]
+                    }
+                },
+                "patterns": [
+                    {
+                        "occupied": 1,
+                        "selector": "single",
+                        "pool": {
+                            "trait_pool": [
+                                "TRC_010",
+                                "TRC_011",
+                                "TRC_012",
+                                "TRC_013",
+                                "TRC_014",
+                                "TRC_015",
+                                "TRC_016"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "number": {
+                    "occupied": 1,
+                    "selector": "single",
+                    "pool": {
+                        "number_pool": [
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1
+                        ]
+                    }
+                },
+                "patterns": [
+                    {
+                        "occupied": 1,
+                        "selector": "single",
+                        "pool": {
+                            "trait_pool": [
+                                "TRC_001",
+                                "TRC_002",
+                                "TRC_003",
+                                "TRC_004",
+                                "TRC_005",
+                                "TRC_006"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "number": {
+                    "occupied": 1,
+                    "selector": "single",
+                    "pool": {
+                        "number_pool": [
+                            0,
+                            0,
+                            1,
+                            1,
+                            1,
+                            1
+                        ]
+                    }
+                },
+                "patterns": [
+                    {
+                        "occupied": 1,
+                        "selector": "single",
+                        "pool": {
+                            "trait_pool": [
+                                "TRC_020",
+                                "TRC_021",
+                                "TRC_022",
+                                "TRC_023"
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

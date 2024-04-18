@@ -1,0 +1,43 @@
+{
+    "bytes": 6,
+    "schema": {
+        "multiple_variables": [
+            {
+                "number": {
+                    "occupied": 1,
+                    "selector": "single",
+                    "pool": {
+                        "number_pool": [
+                            0
+                        ]
+                    }
+                },
+                "patterns": []
+            },
+            {
+                "number": {
+                    "occupied": 1,
+                    "selector": "single",
+                    "pool": {
+                        "number_pool": [
+                            0
+                        ]
+                    }
+                },
+                "patterns": []
+            },
+            {
+                "number": {
+                    "occupied": 1,
+                    "selector": "single",
+                    "pool": {
+                        "number_pool": [
+                            0
+                        ]
+                    }
+                },
+                "patterns": []
+            }
+        ]
+    }
+}

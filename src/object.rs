@@ -39,6 +39,7 @@ declare_object!(Location {
     belonging,
     coordination,
     area,
+    color,
     commodity,
 });
 
@@ -47,19 +48,26 @@ declare_object!(Date {
     year,
     time,
     weather,
-    enmotion,
+    emotion,
     status,
     enironment,
     activity,
     effect,
 });
 
+declare_object!(Story {
+    character,
+    location,
+    date,
+    story,
+});
+
 #[cfg(test)]
 mod test {
     use crate::core::decoder::{decode_segment, set_decoder_language, Language};
     use crate::core::render::Render;
-    use crate::generated::character;
-    use crate::object::Character;
+    use crate::generated::{character, story};
+    use crate::object::{Character, Story};
 
     #[test]
     fn test_render_character() {
@@ -79,6 +87,23 @@ mod test {
 
         let dna = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea";
         let render = charactor.render(dna).expect("render charactor");
+
+        println!("{render}");
+    }
+
+    #[test]
+    fn test_render_story() {
+        set_decoder_language(Language::CN).expect("set language");
+
+        let story = Story {
+            character: decode_segment(story::CHARACTER).unwrap(),
+            location: decode_segment(story::LOCATION).unwrap(),
+            date: decode_segment(story::DATE).unwrap(),
+            story: decode_segment(story::STORY).unwrap(),
+        };
+
+        let dna = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea";
+        let render = story.render(dna).expect("render story");
 
         println!("{render}");
     }
