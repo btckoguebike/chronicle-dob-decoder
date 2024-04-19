@@ -37,7 +37,7 @@ declare_object!(Location {
     adjective,
     name,
     belonging,
-    coordination,
+    coordinate,
     area,
     color,
     commodity,
@@ -48,10 +48,9 @@ declare_object!(Date {
     year,
     time,
     weather,
-    emotion,
-    status,
-    enironment,
-    activity,
+    holiday,
+    season,
+    background,
     effect,
 });
 
@@ -66,8 +65,8 @@ declare_object!(Story {
 mod test {
     use crate::core::decoder::{decode_segment, set_decoder_language, Language};
     use crate::core::render::Render;
-    use crate::generated::{character, story};
-    use crate::object::{Character, Story};
+    use crate::generated::{character, date, location, story};
+    use crate::object::{Character, Date, Location, Story};
 
     #[test]
     fn test_render_character() {
@@ -87,6 +86,47 @@ mod test {
 
         let dna = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea";
         let render = charactor.render(dna).expect("render charactor");
+
+        println!("{render}");
+    }
+
+    #[test]
+    fn test_render_date() {
+        set_decoder_language(Language::CN).expect("set language");
+
+        let date = Date {
+            era: decode_segment(date::ERA).unwrap(),
+            year: decode_segment(date::YEAR).unwrap(),
+            time: decode_segment(date::TIME).unwrap(),
+            weather: decode_segment(date::WEATHER).unwrap(),
+            holiday: decode_segment(date::HOLIDAY).unwrap(),
+            season: decode_segment(date::SEASON).unwrap(),
+            background: decode_segment(date::BACKGROUND).unwrap(),
+            effect: decode_segment(date::EFFECT).unwrap(),
+        };
+
+        let dna = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea";
+        let render = date.render(dna).expect("render charactor");
+
+        println!("{render}");
+    }
+
+    #[test]
+    fn test_render_location() {
+        set_decoder_language(Language::CN).expect("set language");
+
+        let location = Location {
+            adjective: decode_segment(location::ADJECTIVE).unwrap(),
+            name: decode_segment(location::NAME).unwrap(),
+            belonging: decode_segment(location::BELONGING).unwrap(),
+            coordinate: decode_segment(location::COORDINATE).unwrap(),
+            area: decode_segment(location::AREA).unwrap(),
+            color: decode_segment(location::COLOR).unwrap(),
+            commodity: decode_segment(location::COMMODITY).unwrap(),
+        };
+
+        let dna = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea1dff13";
+        let render = location.render(dna).expect("render charactor");
 
         println!("{render}");
     }

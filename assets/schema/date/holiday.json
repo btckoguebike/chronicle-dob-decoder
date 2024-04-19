@@ -6,12 +6,13 @@
             "selector": "single",
             "pool": {
                 "trait_pool": [
-                    "TRL_001",
-                    "TRL_002",
-                    "TRL_003",
-                    "TRL_004",
-                    "TRL_005",
-                    "TRL_006"
+                    "TRD_040",
+                    "TRD_041",
+                    "TRD_042",
+                    "TRD_043",
+                    "TRD_044",
+                    "TRD_045",
+                    "TRD_046"
                 ]
             }
         }

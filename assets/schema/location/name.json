@@ -1,0 +1,18 @@
+{
+    "bytes": 1,
+    "schema": {
+        "simple": {
+            "occupied": 1,
+            "selector": "single",
+            "pool": {
+                "trait_pool": [
+                    "TRL_010",
+                    "TRL_011",
+                    "TRL_012",
+                    "TRL_013",
+                    "TRL_014"
+                ]
+            }
+        }
+    }
+}

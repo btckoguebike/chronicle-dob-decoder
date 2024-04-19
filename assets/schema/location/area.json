@@ -1,0 +1,27 @@
+{
+    "bytes": 4,
+    "schema": {
+        "fixed": [
+            {
+                "occupied": 2,
+                "selector": "double",
+                "pool": {
+                    "number_range": [
+                        1,
+                        4
+                    ]
+                }
+            },
+            {
+                "occupied": 2,
+                "selector": "double",
+                "pool": {
+                    "number_range": [
+                        1,
+                        4
+                    ]
+                }
+            }
+        ]
+    }
+}

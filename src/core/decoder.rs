@@ -108,11 +108,16 @@ where
     D: serde::Deserializer<'de>,
 {
     let raw_trait_pool: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
-    let trait_pool = raw_trait_pool
-        .into_iter()
-        .filter_map(|v| TEXT_POOL_RESOURCE.lock().get(&v).cloned())
-        .collect();
-    Ok(trait_pool)
+    let map = TEXT_POOL_RESOURCE.lock();
+    if !map.is_empty() {
+        let trait_pool = raw_trait_pool
+            .into_iter()
+            .filter_map(|v| map.get(&v).cloned())
+            .collect();
+        Ok(trait_pool)
+    } else {
+        Ok(raw_trait_pool)
+    }
 }
 
 fn template_pool_adapter<'de, D>(deserializer: D) -> Result<Vec<Vec<TemplateInstruction>>, D::Error>
@@ -120,9 +125,14 @@ where
     D: serde::Deserializer<'de>,
 {
     let raw_template_pool: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
-    let template_pool = raw_template_pool
-        .into_iter()
-        .filter_map(|v| TEMPLATE_POOL_RESOURCE.lock().get(&v).cloned())
-        .collect();
-    Ok(template_pool)
+    let map = TEMPLATE_POOL_RESOURCE.lock();
+    if !map.is_empty() {
+        let template_pool = raw_template_pool
+            .into_iter()
+            .filter_map(|v| map.get(&v).cloned())
+            .collect();
+        Ok(template_pool)
+    } else {
+        Ok(Vec::new())
+    }
 }

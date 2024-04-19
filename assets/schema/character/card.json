@@ -7,6 +7,7 @@
                 "selector": "double",
                 "pool": {
                     "number_pool": [
+                        1,
                         2,
                         2,
                         2,
@@ -22,8 +23,8 @@
                     "selector": "double",
                     "pool": {
                         "template_pool": [
-                            "TEC_001",
-                            "TEC_002"
+                            "TEC_01",
+                            "TEC_02"
                         ]
                     }
                 },
@@ -32,8 +33,8 @@
                     "selector": "double",
                     "pool": {
                         "template_pool": [
-                            "TEC_001",
-                            "TEC_002"
+                            "TEC_01",
+                            "TEC_02"
                         ]
                     }
                 },
@@ -42,8 +43,8 @@
                     "selector": "double",
                     "pool": {
                         "template_pool": [
-                            "TEC_001",
-                            "TEC_002"
+                            "TEC_01",
+                            "TEC_02"
                         ]
                     }
                 }

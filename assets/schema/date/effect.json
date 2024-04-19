@@ -1,0 +1,54 @@
+{
+    "bytes": 14,
+    "schema": {
+        "variable": {
+            "number": {
+                "occupied": 2,
+                "selector": "double",
+                "pool": {
+                    "number_pool": [
+                        1,
+                        2,
+                        2,
+                        2,
+                        2,
+                        3,
+                        3
+                    ]
+                }
+            },
+            "patterns": [
+                {
+                    "occupied": 2,
+                    "selector": "double",
+                    "pool": {
+                        "template_pool": [
+                            "TED_01",
+                            "TED_02"
+                        ]
+                    }
+                },
+                {
+                    "occupied": 2,
+                    "selector": "double",
+                    "pool": {
+                        "template_pool": [
+                            "TED_01",
+                            "TED_02"
+                        ]
+                    }
+                },
+                {
+                    "occupied": 2,
+                    "selector": "double",
+                    "pool": {
+                        "template_pool": [
+                            "TED_01",
+                            "TED_02"
+                        ]
+                    }
+                }
+            ]
+        }
+    }
+}
