@@ -5,3 +5,5 @@ mod core;
 mod error;
 mod generated;
 mod object;
+
+pub mod handler;

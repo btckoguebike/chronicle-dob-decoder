@@ -40,6 +40,8 @@ casting_error!(
         ParseLanguageTemplatePoolError,
         ParseLanguageParagraphPoolError,
         ParseSegmentError,
+        ParseRenderedNumberError,
+        ParseRenderedNumbeArrayCountError,
 
         RenderVariableNumberPoolError,
         RenderPatternCountError,
@@ -48,8 +50,17 @@ casting_error!(
         RenderPoolEmptyError,
         RenderTemplateElementsCountError,
         RenderObjectError,
+        RenderToObjectError,
 
+        InvalidArgsLength,
+        InvalidHexedDNAInArgs,
+        InvalidLanguageInArgs,
+        InvalidLanguagePackagesInArgs,
+        InvalidLanguagePackagesConfig,
         InvalidHexedDNA,
+        InvalidEmptyDNA,
+        InvalidCombination,
+
         InvalidErrorString,
     }
 );

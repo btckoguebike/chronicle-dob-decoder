@@ -16,10 +16,8 @@ use super::decoder::VariablePatterns;
 
 static RENDER_DNA: Lazy<Mutex<Vec<u8>>> = Lazy::new(|| Mutex::new(vec![]));
 
-fn set_render_dna(hexed_dna: &str) -> Result<(), Error> {
-    let dna = hex::decode(hexed_dna).map_err(|_| Error::InvalidHexedDNA)?;
+fn set_render_dna(dna: Vec<u8>) {
     *RENDER_DNA.lock() = dna;
-    Ok(())
 }
 
 struct PoolSelector<T: Clone> {
@@ -165,8 +163,8 @@ impl PatternRender {
 }
 
 pub trait Render: Serialize {
-    fn render(&self, hexed_dna: &str) -> Result<String, Error> {
-        set_render_dna(hexed_dna)?;
+    fn render(&self, dna: Vec<u8>) -> Result<String, Error> {
+        set_render_dna(dna);
         serde_json::to_string(self).map_err(|error| match error.classify() {
             Category::Data => error.to_string().into(),
             _ => Error::RenderObjectError,

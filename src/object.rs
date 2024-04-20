@@ -1,13 +1,20 @@
-use serde::Serialize;
+use alloc::string::String;
+use alloc::vec::Vec;
 
-use crate::core::decoder::Segment;
+use serde::{Deserialize, Serialize};
+
+use crate::core::decoder::{decode_segment, Segment};
 use crate::core::render::{segment_render, Render};
+use crate::error::Error;
+use crate::generated::{character, date, location, story};
 
 macro_rules! declare_object {
     (
         $name:ident {
-            $($var:ident,)+
-        }
+            $(($var:ident, $gnvar:ident),)+
+        },
+        $gns:ident,
+        $rndred:ident
     ) => {
         #[derive(Serialize)]
         pub struct $name {
@@ -17,134 +24,228 @@ macro_rules! declare_object {
             )+
         }
 
+        impl $name {
+            pub fn new_from_generated() -> Result<Self, Error> {
+                Ok(Self {
+                    $(
+                        $var: decode_segment($gns::$gnvar)?,
+                    )+
+                })
+            }
+
+            pub fn render_to_object(&self, dna: Vec<u8>) -> Result<$rndred, Error> {
+                let render = self.render(dna)?;
+                Ok(serde_json::from_str(&render).map_err(|_| Error::RenderToObjectError)?)
+            }
+        }
+
         impl Render for $name {}
     };
 }
 
-declare_object!(Character {
-    adjective,
-    name,
-    profession,
-    hp,
-    power,
-    attack,
-    defense,
-    gold,
-    card,
-});
-
-declare_object!(Location {
-    adjective,
-    name,
-    belonging,
-    coordinate,
-    area,
-    color,
-    commodity,
-});
-
-declare_object!(Date {
-    era,
-    year,
-    time,
-    weather,
-    holiday,
-    season,
-    background,
-    effect,
-});
-
-declare_object!(Story {
+declare_object!(
+    Character {
+        (adjective, ADJECTIVE),
+        (name, NAME),
+        (profession, PROFESSION),
+        (hp, HP),
+        (power, POWER),
+        (attack, ATTACK),
+        (defense, DEFENSE),
+        (gold, GOLD),
+        (card, CARD),
+    },
     character,
+    RenderedCharacter
+);
+
+declare_object!(
+    Location {
+        (adjective, ADJECTIVE),
+        (name, NAME),
+        (belonging, BELONGING),
+        (coordinate, COORDINATE),
+        (area, AREA),
+        (color, COLOR),
+        (commodity, COMMODITY),
+    },
     location,
+    RenderedLocation
+);
+
+declare_object!(
+    Date {
+        (era, ERA),
+        (year, YEAR),
+        (time, TIME),
+        (weather, WEATHER),
+        (holiday, HOLIDAY),
+        (season, SEASON),
+        (background, BACKGROUND),
+        (effect, EFFECT),
+    },
     date,
+    RenderedDate
+);
+
+declare_object!(
+    Story {
+        (character, CHARACTER),
+        (location, LOCATION),
+        (date, DATE),
+        (story, STORY),
+    },
     story,
-});
+    RenderedStory
+);
+
+#[derive(Deserialize, Debug)]
+pub struct RenderedCharacter {
+    pub adjective: String,
+    pub name: String,
+    pub profession: String,
+    #[serde(deserialize_with = "number_adapter")]
+    pub hp: u8,
+    #[serde(deserialize_with = "number_adapter")]
+    pub power: u8,
+    #[serde(deserialize_with = "number_adapter")]
+    pub attack: u8,
+    #[serde(deserialize_with = "number_adapter")]
+    pub defense: u8,
+    #[serde(deserialize_with = "number_adapter")]
+    pub gold: u8,
+    pub card: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RenderedLocation {
+    pub adjective: String,
+    pub name: String,
+    pub belonging: String,
+    #[serde(deserialize_with = "number_array_adapter")]
+    pub coordinate: [u8; 2],
+    #[serde(deserialize_with = "number_array_adapter")]
+    pub area: [u8; 2],
+    #[serde(deserialize_with = "number_array_adapter")]
+    pub color: [u8; 4],
+    pub commodity: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RenderedDate {
+    pub era: String,
+    #[serde(deserialize_with = "number_adapter")]
+    pub year: u8,
+    pub time: String,
+    pub weather: String,
+    pub holiday: String,
+    pub season: String,
+    #[serde(deserialize_with = "number_array_adapter")]
+    pub background: [u8; 4],
+    pub effect: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct RenderedStory {
+    #[serde(deserialize_with = "ingredient_array_adapter")]
+    pub character: [Option<String>; 3],
+    #[serde(deserialize_with = "ingredient_array_adapter")]
+    pub location: [Option<String>; 3],
+    #[serde(deserialize_with = "ingredient_array_adapter")]
+    pub date: [Option<String>; 3],
+    pub story: [String; 4],
+}
+
+fn number_adapter<'de, D>(deserializer: D) -> Result<u8, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let number_string: String = serde::Deserialize::deserialize(deserializer)?;
+    u8::from_str_radix(&number_string, 10)
+        .map_err(|_| serde::de::Error::custom(Error::ParseRenderedNumberError))
+}
+
+fn number_array_adapter<'de, D, const N: usize>(deserializer: D) -> Result<[u8; N], D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let number_string_array: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
+    let number_array: [u8; N] = number_string_array
+        .into_iter()
+        .map(|number| u8::from_str_radix(&number, 10))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| serde::de::Error::custom(Error::ParseRenderedNumberError))?
+        .try_into()
+        .map_err(|_| serde::de::Error::custom(Error::ParseRenderedNumbeArrayCountError))?;
+    Ok(number_array)
+}
+
+fn ingredient_array_adapter<'de, D>(deserializer: D) -> Result<[Option<String>; 3], D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let ingredients: [Vec<String>; 3] = serde::Deserialize::deserialize(deserializer)?;
+    Ok(ingredients.map(|mut value| {
+        if value.is_empty() {
+            None
+        } else {
+            Some(value.remove(0))
+        }
+    }))
+}
 
 #[cfg(test)]
 mod test {
-    use crate::core::decoder::{decode_segment, set_decoder_language, Language};
+    use crate::core::decoder::{set_decoder_language, Language};
     use crate::core::render::Render;
-    use crate::generated::{character, date, location, story};
-    use crate::object::{Character, Date, Location, Story};
+    use crate::object::{
+        Character, Date, Location, RenderedCharacter, RenderedDate, RenderedLocation,
+        RenderedStory, Story,
+    };
+
+    const DNA: &str = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea1dff13";
 
     #[test]
     fn test_render_character() {
         set_decoder_language(Language::CN).expect("set language");
-
-        let charactor = Character {
-            adjective: decode_segment(character::ADJECTIVE).unwrap(),
-            name: decode_segment(character::NAME).unwrap(),
-            profession: decode_segment(character::PROFESSION).unwrap(),
-            hp: decode_segment(character::HP).unwrap(),
-            power: decode_segment(character::POWER).unwrap(),
-            attack: decode_segment(character::ATTACK).unwrap(),
-            defense: decode_segment(character::DEFENSE).unwrap(),
-            gold: decode_segment(character::GOLD).unwrap(),
-            card: decode_segment(character::CARD).unwrap(),
-        };
-
-        let dna = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea";
-        let render = charactor.render(dna).expect("render charactor");
-
-        println!("{render}");
-    }
-
-    #[test]
-    fn test_render_date() {
-        set_decoder_language(Language::CN).expect("set language");
-
-        let date = Date {
-            era: decode_segment(date::ERA).unwrap(),
-            year: decode_segment(date::YEAR).unwrap(),
-            time: decode_segment(date::TIME).unwrap(),
-            weather: decode_segment(date::WEATHER).unwrap(),
-            holiday: decode_segment(date::HOLIDAY).unwrap(),
-            season: decode_segment(date::SEASON).unwrap(),
-            background: decode_segment(date::BACKGROUND).unwrap(),
-            effect: decode_segment(date::EFFECT).unwrap(),
-        };
-
-        let dna = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea";
-        let render = date.render(dna).expect("render charactor");
-
-        println!("{render}");
+        let render = Character::new_from_generated()
+            .expect("new character")
+            .render(hex::decode(DNA).unwrap())
+            .expect("render charactor");
+        let character: RenderedCharacter = serde_json::from_str(&render).expect("parse render");
+        println!("{character:?}");
     }
 
     #[test]
     fn test_render_location() {
         set_decoder_language(Language::CN).expect("set language");
+        let render = Location::new_from_generated()
+            .expect("new location")
+            .render(hex::decode(DNA).unwrap())
+            .expect("render charactor");
+        let location: RenderedLocation = serde_json::from_str(&render).expect("parse render");
+        println!("{location:?}");
+    }
 
-        let location = Location {
-            adjective: decode_segment(location::ADJECTIVE).unwrap(),
-            name: decode_segment(location::NAME).unwrap(),
-            belonging: decode_segment(location::BELONGING).unwrap(),
-            coordinate: decode_segment(location::COORDINATE).unwrap(),
-            area: decode_segment(location::AREA).unwrap(),
-            color: decode_segment(location::COLOR).unwrap(),
-            commodity: decode_segment(location::COMMODITY).unwrap(),
-        };
-
-        let dna = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea1dff13";
-        let render = location.render(dna).expect("render charactor");
-
-        println!("{render}");
+    #[test]
+    fn test_render_date() {
+        set_decoder_language(Language::CN).expect("set language");
+        let render = Date::new_from_generated()
+            .expect("new date")
+            .render(hex::decode(DNA).unwrap())
+            .expect("render charactor");
+        let date: RenderedDate = serde_json::from_str(&render).expect("parse render");
+        println!("{date:?}");
     }
 
     #[test]
     fn test_render_story() {
         set_decoder_language(Language::CN).expect("set language");
-
-        let story = Story {
-            character: decode_segment(story::CHARACTER).unwrap(),
-            location: decode_segment(story::LOCATION).unwrap(),
-            date: decode_segment(story::DATE).unwrap(),
-            story: decode_segment(story::STORY).unwrap(),
-        };
-
-        let dna = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea";
-        let render = story.render(dna).expect("render story");
-
-        println!("{render}");
+        let render = Story::new_from_generated()
+            .expect("new story")
+            .render(hex::decode(DNA).unwrap())
+            .expect("render story");
+        let story: RenderedStory = serde_json::from_str(&render).expect("parse render");
+        println!("{story:?}");
     }
 }
