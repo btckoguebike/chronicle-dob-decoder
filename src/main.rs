@@ -27,7 +27,7 @@ fn main() {
         let mut langauges: BTreeMap<String, LanguagePackage> =
             serde_json::from_str(&language_file).expect("parse language file");
         set_decoder_language(Language::FromPackage(
-            langauges.remove("cn").expect("get language").trim(),
+            langauges.remove("cn").expect("get language"),
         ))
         .expect("set language");
     }

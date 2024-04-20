@@ -115,7 +115,6 @@ pub fn main() {
                     value_mod.push_str(&format!("pub const {}: &str = \"\";", file.to_uppercase()));
                     fs::read_to_string(format!("./assets/language/{language}/{file}.json"))
                         .expect("read language_*.json")
-                        .replace("\"", "\\\"")
                         .replace(" ", "")
                         .replace("\n", "")
                 })

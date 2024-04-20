@@ -14,16 +14,6 @@ pub struct LanguagePackage {
     pub paragraph_pool: String,
 }
 
-impl LanguagePackage {
-    pub fn trim(self) -> Self {
-        Self {
-            trait_pool: self.trait_pool.replace("\\\"", "\""),
-            template_pool: self.template_pool.replace("\\\"", "\""),
-            paragraph_pool: self.paragraph_pool.replace("\\\"", "\""),
-        }
-    }
-}
-
 pub struct Parameters {
     pub dna: Vec<u8>,
     pub language_package: LanguagePackage,
