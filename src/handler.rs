@@ -44,16 +44,16 @@ pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Parameters, Error> {
     if args.len() != 3 {
         return Err(Error::InvalidArgsLength);
     }
-    let hexed_dna =
-        String::from_utf8(args[0].to_vec()).map_err(|_| Error::InvalidHexedDNAInArgs)?;
-    let language = String::from_utf8(args[1].to_vec()).map_err(|_| Error::InvalidLanguageInArgs)?;
-    let language_packages: BTreeMap<String, LanguagePackage> =
-        serde_json::from_slice(args[2]).map_err(|_| Error::InvalidLanguagePackagesInArgs)?;
-
-    let dna = hex::decode(hexed_dna).map_err(|_| Error::InvalidHexedDNA)?;
+    let dna = hex::decode(args[0]).map_err(|_| Error::InvalidHexedDNAInArgs)?;
     if dna.is_empty() {
         return Err(Error::InvalidEmptyDNA);
     }
+    let language = String::from_utf8(args[1].to_vec()).map_err(|_| Error::InvalidLanguageInArgs)?;
+    let language_packages: BTreeMap<String, LanguagePackage> = {
+        let bytes = hex::decode(args[2]).map_err(|_| Error::InvalidHexedLanguagePackagesInArgs)?;
+        serde_json::from_slice(&bytes).map_err(|_| Error::InvalidLanguagePackagesInArgs)?
+    };
+
     let Some(language_package) = language_packages.get(&language).cloned() else {
         return Err(Error::InvalidLanguagePackagesConfig);
     };
@@ -82,7 +82,7 @@ pub fn dobs_check_composable(dna_set: [String; 4]) -> Result<bool, Error> {
     let mut story = None;
 
     dna_set.into_iter().try_for_each(|hexed_dna| {
-        let mut dna = hex::decode(hexed_dna).map_err(|_| Error::InvalidHexedDNA)?;
+        let mut dna = hex::decode(hexed_dna).map_err(|_| Error::InvalidHexedDNAInArgs)?;
         match ObjectType::from(dna.remove(0)) {
             ObjectType::Character => {
                 character = Some(Character::new_from_generated()?.render_to_object(dna)?);

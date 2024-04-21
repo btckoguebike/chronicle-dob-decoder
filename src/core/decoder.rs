@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 use spin::{lazy::Lazy, Mutex};
 
-use crate::{error::Error, generated, handler::LanguagePackage};
+use crate::{error::Error, handler::LanguagePackage};
 
 static TEXT_POOL_RESOURCE: Lazy<Mutex<BTreeMap<String, String>>> = Lazy::new(|| Default::default());
 static TEMPLATE_POOL_RESOURCE: Lazy<Mutex<BTreeMap<String, Vec<TemplateInstruction>>>> =
@@ -28,9 +28,9 @@ pub fn set_decoder_language(language: Language) -> Result<(), Error> {
         ),
         #[cfg(not(feature = "production"))]
         Language::CN => (
-            generated::language::cn::TRAIT_POOL.to_string(),
-            generated::language::cn::TEMPLATE_POOL.to_string(),
-            generated::language::cn::PARAGRAPH_POOL.to_string(),
+            crate::generated::language::cn::TRAIT_POOL.to_string(),
+            crate::generated::language::cn::TEMPLATE_POOL.to_string(),
+            crate::generated::language::cn::PARAGRAPH_POOL.to_string(),
         ),
         #[cfg(not(feature = "production"))]
         Language::EN => unimplemented!(),

@@ -129,7 +129,8 @@ pub fn main() {
             language_mod.push_str(&value_mod);
         });
         let packages_content = serde_json::to_string(&packages).expect("serailize packages");
-        fs::write("./production/language.json", packages_content).expect("write language.json");
+        fs::write("./production/language.bin", hex::encode(packages_content))
+            .expect("write language.bin");
     } else {
         ["cn"].into_iter().for_each(|language| {
             let mut value_mod = format!("pub mod {language} {{");
