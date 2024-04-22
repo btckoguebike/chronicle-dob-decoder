@@ -2,7 +2,7 @@
 
 use std::env;
 
-use core::decoder::{set_decoder_language, Language};
+use core::decoder::Language;
 use core::render::Render;
 use object::{Character, Date, Location, Story};
 
@@ -14,8 +14,6 @@ mod handler;
 mod object;
 
 fn main() {
-    set_decoder_language(Language::CN).expect("set language");
-
     let dna = {
         let hexed_dna = env::args().nth(1).expect("DNA is required");
         hex::decode(hexed_dna).expect("encode dna")

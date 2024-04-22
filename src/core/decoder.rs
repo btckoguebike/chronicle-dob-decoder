@@ -1,16 +1,9 @@
-use alloc::collections::BTreeMap;
-use alloc::string::{String, ToString};
+use alloc::string::String;
 use alloc::vec::Vec;
 
 use serde::{Deserialize, Serialize};
-use spin::{lazy::Lazy, Mutex};
 
 use crate::error::Error;
-use crate::generated::language;
-
-static TEXT_POOL_RESOURCE: Lazy<Mutex<BTreeMap<String, String>>> = Lazy::new(|| Default::default());
-static TEMPLATE_POOL_RESOURCE: Lazy<Mutex<BTreeMap<String, Vec<TemplateInstruction>>>> =
-    Lazy::new(|| Default::default());
 
 pub enum Language {
     #[allow(unused)]
@@ -29,28 +22,6 @@ impl TryFrom<String> for Language {
             _ => Err(Error::InvalidLanguageInArgs),
         }
     }
-}
-
-pub fn set_decoder_language(language: Language) -> Result<(), Error> {
-    let (trait_pool, tempalte_pool, paragraph_pool) = match language {
-        Language::CN => (
-            language::cn::TRAIT_POOL.to_string(),
-            language::cn::TEMPLATE_POOL.to_string(),
-            language::cn::PARAGRAPH_POOL.to_string(),
-        ),
-        Language::EN => unimplemented!(),
-    };
-    *TEXT_POOL_RESOURCE.lock() = {
-        let mut trait_resource: BTreeMap<String, String> =
-            serde_json::from_str(&trait_pool).map_err(|_| Error::ParseLanguageTraitPoolError)?;
-        let paragraph_resource: BTreeMap<String, String> = serde_json::from_str(&paragraph_pool)
-            .map_err(|_| Error::ParseLanguageParagraphPoolError)?;
-        trait_resource.extend(paragraph_resource);
-        trait_resource
-    };
-    *TEMPLATE_POOL_RESOURCE.lock() =
-        serde_json::from_str(&tempalte_pool).map_err(|_| Error::ParseLanguageTemplatePoolError)?;
-    Ok(())
 }
 
 pub fn decode_segment(content: &str) -> Result<Segment, Error> {
@@ -77,14 +48,14 @@ pub enum TemplateInstruction {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum Pool {
-    #[serde(alias = "trait_pool", deserialize_with = "trait_pool_adapter")]
+    #[serde(alias = "trait_pool")]
     TraitPool(Vec<String>),
     #[serde(alias = "number_pool")]
     NumberPool(Vec<u16>),
     #[serde(alias = "number_range")]
     NumberRange((u16, u16)),
-    #[serde(alias = "template_pool", deserialize_with = "template_pool_adapter")]
-    TemplatePool(Vec<Vec<TemplateInstruction>>),
+    #[serde(alias = "template_pool")]
+    TemplatePool(Vec<String>),
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -116,38 +87,4 @@ pub enum Schema {
 pub struct Segment {
     pub bytes: u8,
     pub schema: Schema,
-}
-
-fn trait_pool_adapter<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let raw_trait_pool: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
-    let map = TEXT_POOL_RESOURCE.lock();
-    if !map.is_empty() {
-        let trait_pool = raw_trait_pool
-            .into_iter()
-            .filter_map(|v| map.get(&v).cloned())
-            .collect();
-        Ok(trait_pool)
-    } else {
-        Ok(raw_trait_pool)
-    }
-}
-
-fn template_pool_adapter<'de, D>(deserializer: D) -> Result<Vec<Vec<TemplateInstruction>>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let raw_template_pool: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
-    let map = TEMPLATE_POOL_RESOURCE.lock();
-    if !map.is_empty() {
-        let template_pool = raw_template_pool
-            .into_iter()
-            .filter_map(|v| map.get(&v).cloned())
-            .collect();
-        Ok(template_pool)
-    } else {
-        Ok(Vec::new())
-    }
 }

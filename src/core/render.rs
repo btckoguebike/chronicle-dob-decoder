@@ -1,24 +1,16 @@
 use alloc::string::{String, ToString};
 use alloc::{format, vec, vec::Vec};
 use core::cmp::max;
+
+use serde::Serialize;
 use serde_json::error::Category;
 
-use serde::ser::{self, SerializeSeq};
-use serde::Serialize;
-use spin::{lazy::Lazy, Mutex};
-
 use crate::{
-    core::decoder::{Pattern, Pool, Schema, Segment, Selector, TemplateInstruction},
+    core::decoder::{
+        Pattern, Pool, Schema, Segment, Selector, TemplateInstruction, VariablePatterns,
+    },
     error::Error,
 };
-
-use super::decoder::VariablePatterns;
-
-static RENDER_DNA: Lazy<Mutex<Vec<u8>>> = Lazy::new(|| Mutex::new(vec![]));
-
-fn set_render_dna(dna: Vec<u8>) {
-    *RENDER_DNA.lock() = dna;
-}
 
 struct PoolSelector<T: Clone> {
     array: Vec<T>,
@@ -105,7 +97,7 @@ impl PatternRender {
             Pool::TemplatePool(value) => {
                 let templates =
                     PoolSelector::new(value, pattern_bytes)?.select_by(self.pattern.selector)?;
-                Self::render_template_by_single(templates, bytes)?
+                Self::render_template_by_single(Vec::new(), bytes)?
             }
         };
         Ok(render_result)
@@ -164,7 +156,6 @@ impl PatternRender {
 
 pub trait Render: Serialize {
     fn render(&self, dna: Vec<u8>) -> Result<String, Error> {
-        set_render_dna(dna);
         serde_json::to_string(self).map_err(|error| match error.classify() {
             Category::Data => error.to_string().into(),
             _ => Error::RenderObjectError,
@@ -200,49 +191,43 @@ fn render_variable(
         .collect::<Result<Vec<_>, _>>()
 }
 
-pub fn segment_render<S>(segment: &Segment, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    let mut dna_bytes = RENDER_DNA.lock();
+pub enum RenderedSegment {
+    Simple(String),
+    Fixed(Vec<String>),
+    Variable(Vec<String>),
+    MultipleVariables(Vec<Vec<String>>),
+}
+
+pub fn render_segment(
+    segment: &Segment,
+    dna_bytes: &mut Vec<u8>,
+) -> Result<RenderedSegment, Error> {
     let segment_occupied = segment.bytes as usize;
     let mut segment_bytes = dna_bytes
         .splice(0..segment_occupied, vec![])
         .collect::<Vec<_>>();
     match segment.schema.clone() {
         Schema::Simple(pattern) => {
-            let render = PatternRender::new(pattern)
-                .render(&mut segment_bytes)
-                .map_err(ser::Error::custom)?;
-            serializer.serialize_str(&render)
+            let render = PatternRender::new(pattern).render(&mut segment_bytes)?;
+            Ok(RenderedSegment::Simple(render))
         }
         Schema::Fixed(patterns) => {
-            let mut seq = serializer.serialize_seq(Some(patterns.len()))?;
-            patterns.into_iter().try_for_each(|pattern| {
-                let render = PatternRender::new(pattern)
-                    .render(&mut segment_bytes)
-                    .map_err(ser::Error::custom)?;
-                seq.serialize_element(&render)
-            })?;
-            seq.end()
+            let render = patterns
+                .into_iter()
+                .map(|pattern| PatternRender::new(pattern).render(&mut segment_bytes))
+                .collect::<Result<Vec<_>, Error>>()?;
+            Ok(RenderedSegment::Fixed(render))
         }
         Schema::Variable(variable) => {
-            let render_results =
-                render_variable(variable, &mut segment_bytes).map_err(ser::Error::custom)?;
-            let mut seq = serializer.serialize_seq(Some(render_results.len()))?;
-            for value in render_results {
-                seq.serialize_element(&value)?;
-            }
-            seq.end()
+            let render = render_variable(variable, &mut segment_bytes)?;
+            Ok(RenderedSegment::Variable(render))
         }
         Schema::MultipleVariables(variables) => {
-            let mut seq = serializer.serialize_seq(Some(variables.len()))?;
-            for variable in variables.into_iter() {
-                let render_results =
-                    render_variable(variable, &mut segment_bytes).map_err(ser::Error::custom)?;
-                seq.serialize_element(&render_results)?;
-            }
-            seq.end()
+            let render = variables
+                .into_iter()
+                .map(|variable| render_variable(variable, &mut segment_bytes))
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(RenderedSegment::MultipleVariables(render))
         }
     }
 }

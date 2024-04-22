@@ -1,7 +1,7 @@
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-use crate::core::decoder::{set_decoder_language, Language};
+use crate::core::decoder::Language;
 use crate::core::render::Render;
 use crate::error::Error;
 use crate::object::{Character, Date, Location, Story};
@@ -52,7 +52,6 @@ pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Parameters, Error> {
 }
 
 pub fn dobs_decode(parameters: Parameters) -> Result<Vec<u8>, Error> {
-    set_decoder_language(parameters.language)?;
     let mut dna = parameters.dna;
     match ObjectType::from(dna.remove(0)) {
         ObjectType::Character => Character::new_from_generated()?.render(dna),

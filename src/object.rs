@@ -4,7 +4,7 @@ use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 
 use crate::core::decoder::{decode_segment, Segment};
-use crate::core::render::{segment_render, Render};
+use crate::core::render::Render;
 use crate::error::Error;
 use crate::generated::{character, date, location, story};
 
@@ -19,7 +19,6 @@ macro_rules! declare_object {
         #[derive(Serialize)]
         pub struct $name {
             $(
-                #[serde(serialize_with = "segment_render")]
                 pub $var: Segment,
             )+
         }
@@ -196,7 +195,6 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::core::decoder::{set_decoder_language, Language};
     use crate::core::render::Render;
     use crate::object::{
         Character, Date, Location, RenderedCharacter, RenderedDate, RenderedLocation,
@@ -207,7 +205,6 @@ mod test {
 
     #[test]
     fn test_render_character() {
-        set_decoder_language(Language::CN).expect("set language");
         let render = Character::new_from_generated()
             .expect("new character")
             .render(hex::decode(DNA).unwrap())
@@ -218,7 +215,6 @@ mod test {
 
     #[test]
     fn test_render_location() {
-        set_decoder_language(Language::CN).expect("set language");
         let render = Location::new_from_generated()
             .expect("new location")
             .render(hex::decode(DNA).unwrap())
@@ -229,7 +225,6 @@ mod test {
 
     #[test]
     fn test_render_date() {
-        set_decoder_language(Language::CN).expect("set language");
         let render = Date::new_from_generated()
             .expect("new date")
             .render(hex::decode(DNA).unwrap())
@@ -240,7 +235,6 @@ mod test {
 
     #[test]
     fn test_render_story() {
-        set_decoder_language(Language::CN).expect("set language");
         let render = Story::new_from_generated()
             .expect("new story")
             .render(hex::decode(DNA).unwrap())
