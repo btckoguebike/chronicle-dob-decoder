@@ -55,9 +55,6 @@ casting_error!(
         InvalidArgsLength,
         InvalidHexedDNAInArgs,
         InvalidLanguageInArgs,
-        InvalidHexedLanguagePackagesInArgs,
-        InvalidLanguagePackagesInArgs,
-        InvalidLanguagePackagesConfig,
         InvalidEmptyDNA,
         InvalidCombination,
 

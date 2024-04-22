@@ -5,37 +5,40 @@ use alloc::vec::Vec;
 use serde::{Deserialize, Serialize};
 use spin::{lazy::Lazy, Mutex};
 
-use crate::{error::Error, handler::LanguagePackage};
+use crate::error::Error;
+use crate::generated::language;
 
 static TEXT_POOL_RESOURCE: Lazy<Mutex<BTreeMap<String, String>>> = Lazy::new(|| Default::default());
 static TEMPLATE_POOL_RESOURCE: Lazy<Mutex<BTreeMap<String, Vec<TemplateInstruction>>>> =
     Lazy::new(|| Default::default());
 
 pub enum Language {
-    FromPackage(LanguagePackage),
     #[allow(unused)]
     CN,
     #[allow(unused)]
     EN,
 }
 
+impl TryFrom<String> for Language {
+    type Error = Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.to_lowercase().as_str() {
+            "cn" => Ok(Self::CN),
+            "en" => Ok(Self::EN),
+            _ => Err(Error::InvalidLanguageInArgs),
+        }
+    }
+}
+
 pub fn set_decoder_language(language: Language) -> Result<(), Error> {
     let (trait_pool, tempalte_pool, paragraph_pool) = match language {
-        Language::FromPackage(package) => (
-            package.trait_pool,
-            package.template_pool,
-            package.paragraph_pool,
-        ),
-        #[cfg(not(feature = "production"))]
         Language::CN => (
-            crate::generated::language::cn::TRAIT_POOL.to_string(),
-            crate::generated::language::cn::TEMPLATE_POOL.to_string(),
-            crate::generated::language::cn::PARAGRAPH_POOL.to_string(),
+            language::cn::TRAIT_POOL.to_string(),
+            language::cn::TEMPLATE_POOL.to_string(),
+            language::cn::PARAGRAPH_POOL.to_string(),
         ),
-        #[cfg(not(feature = "production"))]
         Language::EN => unimplemented!(),
-        #[cfg(feature = "production")]
-        _ => panic!("language selection disabled in PRODUCTION mode"),
     };
     *TEXT_POOL_RESOURCE.lock() = {
         let mut trait_resource: BTreeMap<String, String> =

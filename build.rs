@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, env, fs, process::Command};
+use std::{fs, process::Command};
 
 #[derive(serde::Serialize)]
 pub struct LanguagePackage {
@@ -105,53 +105,25 @@ pub fn main() {
 
     // generate `language` module
     let mut language_mod = String::from("pub mod language {");
-    if env::var("CARGO_FEATURE_PRODUCTION").is_ok() {
-        let mut packages = BTreeMap::new();
-        ["cn"].into_iter().for_each(|language| {
-            let mut value_mod = format!("pub mod {language} {{");
-            let contents = ["trait_pool", "template_pool", "paragraph_pool"]
-                .into_iter()
-                .map(|file| {
-                    value_mod.push_str(&format!("pub const {}: &str = \"\";", file.to_uppercase()));
+    ["cn"].into_iter().for_each(|language| {
+        let mut value_mod = format!("pub mod {language} {{");
+        ["trait_pool", "template_pool", "paragraph_pool"]
+            .into_iter()
+            .for_each(|file| {
+                let content =
                     fs::read_to_string(format!("./assets/language/{language}/{file}.json"))
                         .expect("read language_*.json")
+                        .replace("\"", "\\\"")
                         .replace(" ", "")
-                        .replace("\n", "")
-                })
-                .collect::<Vec<_>>();
-            let package = LanguagePackage {
-                trait_pool: contents[0].clone(),
-                template_pool: contents[1].clone(),
-                paragraph_pool: contents[2].clone(),
-            };
-            packages.insert(language.to_string(), package);
-            value_mod.push_str("}");
-            language_mod.push_str(&value_mod);
-        });
-        let packages_content = serde_json::to_string(&packages).expect("serailize packages");
-        fs::write("./production/language.bin", hex::encode(packages_content))
-            .expect("write language.bin");
-    } else {
-        ["cn"].into_iter().for_each(|language| {
-            let mut value_mod = format!("pub mod {language} {{");
-            ["trait_pool", "template_pool", "paragraph_pool"]
-                .into_iter()
-                .for_each(|file| {
-                    let content =
-                        fs::read_to_string(format!("./assets/language/{language}/{file}.json"))
-                            .expect("read language_*.json")
-                            .replace("\"", "\\\"")
-                            .replace(" ", "")
-                            .replace("\n", "");
-                    value_mod.push_str(&format!(
-                        "pub const {}: &str = \"{content}\";",
-                        file.to_uppercase()
-                    ));
-                });
-            value_mod.push_str("}");
-            language_mod.push_str(&value_mod);
-        });
-    };
+                        .replace("\n", "");
+                value_mod.push_str(&format!(
+                    "pub const {}: &str = \"{content}\";",
+                    file.to_uppercase()
+                ));
+            });
+        value_mod.push_str("}");
+        language_mod.push_str(&value_mod);
+    });
     language_mod.push_str("}");
 
     // generate `generated.rs`

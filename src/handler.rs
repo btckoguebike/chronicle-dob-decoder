@@ -1,4 +1,3 @@
-use alloc::collections::BTreeMap;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
@@ -7,16 +6,9 @@ use crate::core::render::Render;
 use crate::error::Error;
 use crate::object::{Character, Date, Location, Story};
 
-#[derive(serde::Deserialize, Clone)]
-pub struct LanguagePackage {
-    pub trait_pool: String,
-    pub template_pool: String,
-    pub paragraph_pool: String,
-}
-
 pub struct Parameters {
     pub dna: Vec<u8>,
-    pub language_package: LanguagePackage,
+    pub language: Language,
 }
 
 #[repr(u8)]
@@ -41,30 +33,26 @@ impl From<u8> for ObjectType {
 }
 
 pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Parameters, Error> {
-    if args.len() != 3 {
+    if args.len() != 2 {
         return Err(Error::InvalidArgsLength);
     }
-    let dna = hex::decode(args[0]).map_err(|_| Error::InvalidHexedDNAInArgs)?;
-    if dna.is_empty() {
-        return Err(Error::InvalidEmptyDNA);
-    }
-    let language = String::from_utf8(args[1].to_vec()).map_err(|_| Error::InvalidLanguageInArgs)?;
-    let language_packages: BTreeMap<String, LanguagePackage> = {
-        let bytes = hex::decode(args[2]).map_err(|_| Error::InvalidHexedLanguagePackagesInArgs)?;
-        serde_json::from_slice(&bytes).map_err(|_| Error::InvalidLanguagePackagesInArgs)?
+    let dna = {
+        let dna = hex::decode(args[0]).map_err(|_| Error::InvalidHexedDNAInArgs)?;
+        if dna.is_empty() {
+            return Err(Error::InvalidEmptyDNA);
+        }
+        dna
     };
-
-    let Some(language_package) = language_packages.get(&language).cloned() else {
-        return Err(Error::InvalidLanguagePackagesConfig);
+    let language = {
+        let language =
+            String::from_utf8(args[1].to_vec()).map_err(|_| Error::InvalidLanguageInArgs)?;
+        language.try_into()?
     };
-    Ok(Parameters {
-        dna,
-        language_package,
-    })
+    Ok(Parameters { dna, language })
 }
 
 pub fn dobs_decode(parameters: Parameters) -> Result<Vec<u8>, Error> {
-    set_decoder_language(Language::FromPackage(parameters.language_package))?;
+    set_decoder_language(parameters.language)?;
     let mut dna = parameters.dna;
     match ObjectType::from(dna.remove(0)) {
         ObjectType::Character => Character::new_from_generated()?.render(dna),
