@@ -10,9 +10,10 @@ use crate::generated::{character, date, location, story};
 
 macro_rules! declare_object {
     (
-        $name:ident {
+        {
             $(($var:ident, $gnvar:ident),)+
         },
+        $name:ident,
         $gns:ident,
         $rndred:ident
     ) => {
@@ -44,7 +45,7 @@ macro_rules! declare_object {
 }
 
 declare_object!(
-    Character {
+    {
         (adjective, ADJECTIVE),
         (name, NAME),
         (profession, PROFESSION),
@@ -55,12 +56,13 @@ declare_object!(
         (gold, GOLD),
         (card, CARD),
     },
+    Character,
     character,
     RenderedCharacter
 );
 
 declare_object!(
-    Location {
+    {
         (adjective, ADJECTIVE),
         (name, NAME),
         (belonging, BELONGING),
@@ -69,12 +71,13 @@ declare_object!(
         (color, COLOR),
         (commodity, COMMODITY),
     },
+    Location,
     location,
     RenderedLocation
 );
 
 declare_object!(
-    Date {
+    {
         (era, ERA),
         (year, YEAR),
         (time, TIME),
@@ -84,22 +87,25 @@ declare_object!(
         (background, BACKGROUND),
         (effect, EFFECT),
     },
+    Date,
     date,
     RenderedDate
 );
 
 declare_object!(
-    Story {
+    {
         (character, CHARACTER),
         (location, LOCATION),
         (date, DATE),
         (story, STORY),
     },
+    Story,
     story,
     RenderedStory
 );
 
-#[derive(Deserialize, Debug)]
+#[cfg_attr(test, derive(Debug))]
+#[derive(Deserialize)]
 pub struct RenderedCharacter {
     pub adjective: String,
     pub name: String,
@@ -117,7 +123,8 @@ pub struct RenderedCharacter {
     pub card: Vec<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[cfg_attr(test, derive(Debug))]
+#[derive(Deserialize)]
 pub struct RenderedLocation {
     pub adjective: String,
     pub name: String,
@@ -131,7 +138,8 @@ pub struct RenderedLocation {
     pub commodity: Vec<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[cfg_attr(test, derive(Debug))]
+#[derive(Deserialize)]
 pub struct RenderedDate {
     pub era: String,
     #[serde(deserialize_with = "number_adapter")]
@@ -145,7 +153,8 @@ pub struct RenderedDate {
     pub effect: Vec<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[cfg_attr(test, derive(Debug))]
+#[derive(Deserialize)]
 pub struct RenderedStory {
     #[serde(deserialize_with = "ingredient_array_adapter")]
     pub character: [Option<String>; 3],

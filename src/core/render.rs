@@ -76,92 +76,6 @@ impl<T: Clone> PoolSelector<T> {
     }
 }
 
-struct PatternRender {
-    pattern: Pattern,
-}
-
-impl PatternRender {
-    fn new(pattern: Pattern) -> Self {
-        Self { pattern }
-    }
-
-    fn render(self, bytes: &mut Vec<u8>) -> Result<String, Error> {
-        let occupied = self.pattern.occupied as usize;
-        let pattern_bytes = bytes.splice(0..occupied, vec![]).collect::<Vec<_>>();
-        let render_result = match self.pattern.pool {
-            Pool::TraitPool(value) => {
-                PoolSelector::new(value, pattern_bytes)?.select_by(self.pattern.selector)?
-            }
-            Pool::NumberPool(value) => {
-                let value =
-                    PoolSelector::new(value, pattern_bytes)?.select_by(self.pattern.selector)?;
-                format!("{value}")
-            }
-            Pool::NumberRange(value) => {
-                let value = PoolSelector::new_range(value.0..value.1, pattern_bytes)?
-                    .select_by(self.pattern.selector)?;
-                format!("{value}")
-            }
-            Pool::TemplatePool(value) => {
-                let templates =
-                    PoolSelector::new(value, pattern_bytes)?.select_by(self.pattern.selector)?;
-                Self::render_template_by_single(templates, bytes)?
-            }
-        };
-        Ok(render_result)
-    }
-
-    fn render_template_by_single(
-        templates: Vec<TemplateInstruction>,
-        bytes: &mut Vec<u8>,
-    ) -> Result<String, Error> {
-        let mut render_results = vec![];
-        let mut pending_values = vec![];
-        for template in templates {
-            match template {
-                TemplateInstruction::Pool(array) => {
-                    let value = PoolSelector::new(array, bytes.splice(0..1, vec![]).collect())?
-                        .select_by_single()?;
-                    pending_values.push(value);
-                }
-                TemplateInstruction::Range(v1, v2) => {
-                    let value =
-                        PoolSelector::new_range(v1..=v2, bytes.splice(0..1, vec![]).collect())?
-                            .select_by_single()?;
-                    pending_values.push(value);
-                }
-                TemplateInstruction::Template(template) => match pending_values.len() {
-                    0 => render_results.push(template),
-                    1 => {
-                        let parts = template.split("x").collect::<Vec<_>>();
-                        assert!(parts.len() == 2);
-                        render_results.push(format!(
-                            "{}{}{}",
-                            parts[0],
-                            pending_values.remove(0),
-                            parts[1]
-                        ))
-                    }
-                    2 => {
-                        let parts = template.split("x").collect::<Vec<_>>();
-                        assert!(parts.len() == 3);
-                        render_results.push(format!(
-                            "{}{}{}{}{}",
-                            parts[0],
-                            pending_values.remove(0),
-                            parts[1],
-                            pending_values.remove(0),
-                            parts[2]
-                        ));
-                    }
-                    _ => return Err(Error::RenderTemplateElementsCountError),
-                },
-            }
-        }
-        Ok(render_results.join(" => "))
-    }
-}
-
 pub trait Render: Serialize {
     fn render(&self, dna: Vec<u8>) -> Result<String, Error> {
         set_render_dna(dna);
@@ -170,6 +84,79 @@ pub trait Render: Serialize {
             _ => Error::RenderObjectError,
         })
     }
+}
+
+fn render_pattern(pattern: Pattern, bytes: &mut Vec<u8>) -> Result<String, Error> {
+    let occupied = pattern.occupied as usize;
+    let pattern_bytes = bytes.splice(0..occupied, vec![]).collect::<Vec<_>>();
+    let render_result = match pattern.pool {
+        Pool::TraitPool(value) => {
+            PoolSelector::new(value, pattern_bytes)?.select_by(pattern.selector)?
+        }
+        Pool::NumberPool(value) => {
+            let value = PoolSelector::new(value, pattern_bytes)?.select_by(pattern.selector)?;
+            format!("{value}")
+        }
+        Pool::NumberRange(value) => {
+            let value = PoolSelector::new_range(value.0..value.1, pattern_bytes)?
+                .select_by(pattern.selector)?;
+            format!("{value}")
+        }
+        Pool::TemplatePool(value) => {
+            let templates = PoolSelector::new(value, pattern_bytes)?.select_by(pattern.selector)?;
+            render_template_by_single(templates, bytes)?
+        }
+    };
+    Ok(render_result)
+}
+
+fn render_template_by_single(
+    templates: Vec<TemplateInstruction>,
+    bytes: &mut Vec<u8>,
+) -> Result<String, Error> {
+    let mut render_results = vec![];
+    let mut pending_values = vec![];
+    for template in templates {
+        match template {
+            TemplateInstruction::Pool(array) => {
+                let value = PoolSelector::new(array, bytes.splice(0..1, vec![]).collect())?
+                    .select_by_single()?;
+                pending_values.push(value);
+            }
+            TemplateInstruction::Range(v1, v2) => {
+                let value = PoolSelector::new_range(v1..=v2, bytes.splice(0..1, vec![]).collect())?
+                    .select_by_single()?;
+                pending_values.push(value);
+            }
+            TemplateInstruction::Template(template) => match pending_values.len() {
+                0 => render_results.push(template),
+                1 => {
+                    let parts = template.split("x").collect::<Vec<_>>();
+                    assert!(parts.len() == 2);
+                    render_results.push(format!(
+                        "{}{}{}",
+                        parts[0],
+                        pending_values.remove(0),
+                        parts[1]
+                    ))
+                }
+                2 => {
+                    let parts = template.split("x").collect::<Vec<_>>();
+                    assert!(parts.len() == 3);
+                    render_results.push(format!(
+                        "{}{}{}{}{}",
+                        parts[0],
+                        pending_values.remove(0),
+                        parts[1],
+                        pending_values.remove(0),
+                        parts[2]
+                    ));
+                }
+                _ => return Err(Error::RenderTemplateElementsCountError),
+            },
+        }
+    }
+    Ok(render_results.join(" => "))
 }
 
 fn render_variable(
@@ -195,7 +182,7 @@ fn render_variable(
     (0..number)
         .map(|_| {
             let pattern = variable.patterns.remove(0);
-            PatternRender::new(pattern).render(segment_bytes)
+            render_pattern(pattern, segment_bytes)
         })
         .collect::<Result<Vec<_>, _>>()
 }
@@ -211,17 +198,14 @@ where
         .collect::<Vec<_>>();
     match segment.schema.clone() {
         Schema::Simple(pattern) => {
-            let render = PatternRender::new(pattern)
-                .render(&mut segment_bytes)
-                .map_err(ser::Error::custom)?;
+            let render = render_pattern(pattern, &mut segment_bytes).map_err(ser::Error::custom)?;
             serializer.serialize_str(&render)
         }
         Schema::Fixed(patterns) => {
             let mut seq = serializer.serialize_seq(Some(patterns.len()))?;
             patterns.into_iter().try_for_each(|pattern| {
-                let render = PatternRender::new(pattern)
-                    .render(&mut segment_bytes)
-                    .map_err(ser::Error::custom)?;
+                let render =
+                    render_pattern(pattern, &mut segment_bytes).map_err(ser::Error::custom)?;
                 seq.serialize_element(&render)
             })?;
             seq.end()
