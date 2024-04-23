@@ -1,63 +1,38 @@
-macro_rules! casting_error {
-    (
-        pub enum $name:ident {
-            $($error:ident ,)+
-        }
-    ) => {
-        #[repr(u64)]
-        #[derive(Debug)]
-        pub enum $name {
-            $($error ,)+
-        }
+#[repr(u64)]
+#[cfg_attr(test, derive(Debug))]
+pub enum Error {
+    ParseLanguageTraitPoolError,
+    ParseLanguageTemplatePoolError,
+    ParseLanguageParagraphPoolError,
+    ParseSegmentError,
+    ParseRenderedNumberError,
+    ParseRenderedNumbeArrayCountError,
 
-        impl core::fmt::Display for $name {
-            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-                let error = match self {
-                    $(
-                        Self::$error => stringify!($error),
-                    )+
-                };
-                f.write_str(error)
-            }
-        }
+    RenderVariableNumberPoolError,
+    RenderPatternCountError,
+    RenderAssembleSingleSelectorError,
+    RenderAssembleDoubleSelectorError,
+    RenderPoolEmptyError,
+    RenderTemplateElementsCountError,
+    RenderRecoverToObjectError,
+    RenderTextTranslationError,
+    RenderTemplateTranslationError,
 
-        impl From<alloc::string::String> for Error {
-            fn from(value: alloc::string::String) -> Self {
-                match value.as_str() {
-                    $(
-                        stringify!($error) => Self::$error,
-                    )+
-                    _ => Self::InvalidErrorString,
-                }
-            }
-        }
-    };
+    ExtractPatternNumberError,
+    ExtractPatternTextError,
+    ExtractSegmentNumberError,
+    ExtractSegmentNumberArrayError,
+    ExtractSegmentTextError,
+    ExtractSegmentTextArrayError,
+    ExtractSegmentMultipleArrayError,
+
+    MatchFixedNumberArrayError,
+    MatchFixedStringArrayError,
+    MatchFixedMultipleArrayError,
+
+    InvalidArgsLength,
+    InvalidHexedDNAInArgs,
+    InvalidLanguageInArgs,
+    InvalidEmptyDNA,
+    InvalidCombination,
 }
-
-casting_error!(
-    pub enum Error {
-        ParseLanguageTraitPoolError,
-        ParseLanguageTemplatePoolError,
-        ParseLanguageParagraphPoolError,
-        ParseSegmentError,
-        ParseRenderedNumberError,
-        ParseRenderedNumbeArrayCountError,
-
-        RenderVariableNumberPoolError,
-        RenderPatternCountError,
-        RenderAssembleSingleSelectorError,
-        RenderAssembleDoubleSelectorError,
-        RenderPoolEmptyError,
-        RenderTemplateElementsCountError,
-        RenderObjectError,
-        RenderToObjectError,
-
-        InvalidArgsLength,
-        InvalidHexedDNAInArgs,
-        InvalidLanguageInArgs,
-        InvalidEmptyDNA,
-        InvalidCombination,
-
-        InvalidErrorString,
-    }
-);

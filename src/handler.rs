@@ -2,9 +2,9 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
 use crate::core::decoder::Language;
-use crate::core::render::Render;
+use crate::core::render::SegmentRender;
 use crate::error::Error;
-use crate::object::{Character, Date, Location, Story};
+use crate::object::{RawCharacter, RawDate, RawLocation, RawStory};
 
 pub struct Parameters {
     pub dna: Vec<u8>,
@@ -53,11 +53,12 @@ pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Parameters, Error> {
 
 pub fn dobs_decode(parameters: Parameters) -> Result<Vec<u8>, Error> {
     let mut dna = parameters.dna;
+    let segment_render = SegmentRender::new(parameters.language)?;
     match ObjectType::from(dna.remove(0)) {
-        ObjectType::Character => Character::new_from_generated()?.render(dna),
-        ObjectType::Location => Location::new_from_generated()?.render(dna),
-        ObjectType::Date => Date::new_from_generated()?.render(dna),
-        ObjectType::Story => Story::new_from_generated()?.render(dna),
+        ObjectType::Character => RawCharacter::from_generated()?.render(&segment_render, dna),
+        ObjectType::Location => RawLocation::from_generated()?.render(&segment_render, dna),
+        ObjectType::Date => RawDate::from_generated()?.render(&segment_render, dna),
+        ObjectType::Story => RawStory::from_generated()?.render(&segment_render, dna),
     }
     .map(|value| value.as_bytes().to_vec())
 }
@@ -68,20 +69,23 @@ pub fn dobs_check_composable(dna_set: [String; 4]) -> Result<bool, Error> {
     let mut date = None;
     let mut story = None;
 
+    let segment_render = SegmentRender::new(Language::CN)?;
     dna_set.into_iter().try_for_each(|hexed_dna| {
         let mut dna = hex::decode(hexed_dna).map_err(|_| Error::InvalidHexedDNAInArgs)?;
         match ObjectType::from(dna.remove(0)) {
             ObjectType::Character => {
-                character = Some(Character::new_from_generated()?.render_to_object(dna)?);
+                character =
+                    Some(RawCharacter::from_generated()?.render_to_object(&segment_render, dna)?);
             }
             ObjectType::Location => {
-                location = Some(Location::new_from_generated()?.render_to_object(dna)?);
+                location =
+                    Some(RawLocation::from_generated()?.render_to_object(&segment_render, dna)?);
             }
             ObjectType::Date => {
-                date = Some(Date::new_from_generated()?.render_to_object(dna)?);
+                date = Some(RawDate::from_generated()?.render_to_object(&segment_render, dna)?);
             }
             ObjectType::Story => {
-                story = Some(Story::new_from_generated()?.render_to_object(dna)?);
+                story = Some(RawStory::from_generated()?.render_to_object(&segment_render, dna)?);
             }
         };
         Result::<_, Error>::Ok(())

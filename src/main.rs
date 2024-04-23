@@ -3,8 +3,8 @@
 use std::env;
 
 use core::decoder::Language;
-use core::render::Render;
-use object::{Character, Date, Location, Story};
+use core::render::SegmentRender;
+use object::{RawCharacter, RawDate, RawLocation, RawStory};
 
 extern crate alloc;
 mod core;
@@ -18,22 +18,33 @@ fn main() {
         let hexed_dna = env::args().nth(1).expect("DNA is required");
         hex::decode(hexed_dna).expect("encode dna")
     };
-    let character_render = Character::new_from_generated()
-        .expect("new character")
-        .render(dna.clone())
-        .expect("render charactor");
-    let location_render = Location::new_from_generated()
-        .expect("new location")
-        .render(dna.clone())
-        .expect("render location");
-    let date_render = Date::new_from_generated()
-        .expect("new date")
-        .render(dna.clone())
-        .expect("render character");
-    let story_render = Story::new_from_generated()
-        .expect("new story")
-        .render(dna)
-        .expect("render story");
+    let segment_render = SegmentRender::new(Language::CN)
+        .map_err(|_| "segment render")
+        .unwrap();
+    let character_render = RawCharacter::from_generated()
+        .map_err(|_| "new character")
+        .unwrap()
+        .render(&segment_render, dna.clone())
+        .map_err(|_| "render charactor")
+        .unwrap();
+    let location_render = RawLocation::from_generated()
+        .map_err(|_| "new location")
+        .unwrap()
+        .render(&segment_render, dna.clone())
+        .map_err(|_| "render location")
+        .unwrap();
+    let date_render = RawDate::from_generated()
+        .map_err(|_| "new date")
+        .unwrap()
+        .render(&segment_render, dna.clone())
+        .map_err(|_| "render character")
+        .unwrap();
+    let story_render = RawStory::from_generated()
+        .map_err(|_| "new story")
+        .unwrap()
+        .render(&segment_render, dna)
+        .map_err(|_| "render story")
+        .unwrap();
 
     println!("[人物]\n{character_render}\n");
     println!("[地点]\n{location_render}\n");

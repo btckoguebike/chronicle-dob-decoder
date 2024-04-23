@@ -1,30 +1,37 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::core::decoder::{decode_segment, Segment};
-use crate::core::render::Render;
+use crate::core::render::{RenderedSegment, SegmentRender};
 use crate::error::Error;
 use crate::generated::{character, date, location, story};
 
 macro_rules! declare_object {
     (
-        $name:ident {
+        {
             $(($var:ident, $gnvar:ident),)+
         },
+        $name:ident,
         $gns:ident,
-        $rndred:ident
+        $rndred:ident,
+        $rname:ident
     ) => {
-        #[derive(Serialize)]
         pub struct $name {
             $(
                 pub $var: Segment,
             )+
         }
 
+        pub struct $rndred {
+            $(
+                pub $var: RenderedSegment,
+            )+
+        }
+
         impl $name {
-            pub fn new_from_generated() -> Result<Self, Error> {
+            pub fn from_generated() -> Result<Self, Error> {
                 Ok(Self {
                     $(
                         $var: decode_segment($gns::$gnvar)?,
@@ -32,18 +39,24 @@ macro_rules! declare_object {
                 })
             }
 
-            pub fn render_to_object(&self, dna: Vec<u8>) -> Result<$rndred, Error> {
-                let render = self.render(dna)?;
-                Ok(serde_json::from_str(&render).map_err(|_| Error::RenderToObjectError)?)
+            pub fn render_to_object(&self, segment_render: &SegmentRender, mut dna: Vec<u8>) -> Result<$rname, Error> {
+                $rndred {
+                    $(
+                        $var: segment_render.render(&self.$var, &mut dna)?,
+                    )+
+                }.try_into()
+            }
+
+            pub fn render(&self, segment_render: &SegmentRender, dna: Vec<u8>) -> Result<String, Error> {
+                let object = self.render_to_object(segment_render, dna)?;
+                serde_json::to_string(&object).map_err(|_| Error::RenderRecoverToObjectError)
             }
         }
-
-        impl Render for $name {}
     };
 }
 
 declare_object!(
-    Character {
+    {
         (adjective, ADJECTIVE),
         (name, NAME),
         (profession, PROFESSION),
@@ -54,12 +67,14 @@ declare_object!(
         (gold, GOLD),
         (card, CARD),
     },
+    RawCharacter,
     character,
-    RenderedCharacter
+    RenderedCharacter,
+    Character
 );
 
 declare_object!(
-    Location {
+    {
         (adjective, ADJECTIVE),
         (name, NAME),
         (belonging, BELONGING),
@@ -68,12 +83,14 @@ declare_object!(
         (color, COLOR),
         (commodity, COMMODITY),
     },
+    RawLocation,
     location,
-    RenderedLocation
+    RenderedLocation,
+    Location
 );
 
 declare_object!(
-    Date {
+    {
         (era, ERA),
         (year, YEAR),
         (time, TIME),
@@ -83,163 +100,213 @@ declare_object!(
         (background, BACKGROUND),
         (effect, EFFECT),
     },
+    RawDate,
     date,
-    RenderedDate
+    RenderedDate,
+    Date
 );
 
 declare_object!(
-    Story {
+    {
         (character, CHARACTER),
         (location, LOCATION),
         (date, DATE),
         (story, STORY),
     },
+    RawStory,
     story,
-    RenderedStory
+    RenderedStory,
+    Story
 );
 
-#[derive(Deserialize, Debug)]
-pub struct RenderedCharacter {
+#[derive(Serialize)]
+pub struct Character {
     pub adjective: String,
     pub name: String,
     pub profession: String,
-    #[serde(deserialize_with = "number_adapter")]
     pub hp: u8,
-    #[serde(deserialize_with = "number_adapter")]
     pub power: u8,
-    #[serde(deserialize_with = "number_adapter")]
     pub attack: u8,
-    #[serde(deserialize_with = "number_adapter")]
     pub defense: u8,
-    #[serde(deserialize_with = "number_adapter")]
     pub gold: u8,
     pub card: Vec<String>,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct RenderedLocation {
+impl TryFrom<RenderedCharacter> for Character {
+    type Error = Error;
+
+    fn try_from(value: RenderedCharacter) -> Result<Self, Self::Error> {
+        Ok(Self {
+            adjective: value.adjective.text()?,
+            name: value.name.text()?,
+            profession: value.profession.text()?,
+            hp: value.hp.number()?,
+            power: value.power.number()?,
+            attack: value.attack.number()?,
+            defense: value.defense.number()?,
+            gold: value.gold.number()?,
+            card: value.card.text_array()?,
+        })
+    }
+}
+
+#[derive(Serialize)]
+pub struct Location {
     pub adjective: String,
     pub name: String,
     pub belonging: String,
-    #[serde(deserialize_with = "number_array_adapter")]
     pub coordinate: [u8; 2],
-    #[serde(deserialize_with = "number_array_adapter")]
     pub area: [u8; 2],
-    #[serde(deserialize_with = "number_array_adapter")]
     pub color: [u8; 4],
     pub commodity: Vec<String>,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct RenderedDate {
+impl TryFrom<RenderedLocation> for Location {
+    type Error = Error;
+
+    fn try_from(value: RenderedLocation) -> Result<Self, Self::Error> {
+        Ok(Self {
+            adjective: value.adjective.text()?,
+            name: value.name.text()?,
+            belonging: value.belonging.text()?,
+            coordinate: fixed_number_array(value.coordinate)?,
+            area: fixed_number_array(value.area)?,
+            color: fixed_number_array(value.color)?,
+            commodity: value.commodity.text_array()?,
+        })
+    }
+}
+
+#[derive(Serialize)]
+pub struct Date {
     pub era: String,
-    #[serde(deserialize_with = "number_adapter")]
     pub year: u8,
     pub time: String,
     pub weather: String,
     pub holiday: String,
     pub season: String,
-    #[serde(deserialize_with = "number_array_adapter")]
     pub background: [u8; 4],
     pub effect: Vec<String>,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct RenderedStory {
-    #[serde(deserialize_with = "ingredient_array_adapter")]
+impl TryFrom<RenderedDate> for Date {
+    type Error = Error;
+
+    fn try_from(value: RenderedDate) -> Result<Self, Self::Error> {
+        Ok(Self {
+            era: value.era.text()?,
+            year: value.year.number()?,
+            time: value.time.text()?,
+            weather: value.weather.text()?,
+            holiday: value.holiday.text()?,
+            season: value.season.text()?,
+            background: fixed_number_array(value.background)?,
+            effect: value.effect.text_array()?,
+        })
+    }
+}
+
+#[derive(Serialize)]
+pub struct Story {
     pub character: [Option<String>; 3],
-    #[serde(deserialize_with = "ingredient_array_adapter")]
     pub location: [Option<String>; 3],
-    #[serde(deserialize_with = "ingredient_array_adapter")]
     pub date: [Option<String>; 3],
     pub story: [String; 4],
 }
 
-fn number_adapter<'de, D>(deserializer: D) -> Result<u8, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let number_string: String = serde::Deserialize::deserialize(deserializer)?;
-    u8::from_str_radix(&number_string, 10)
-        .map_err(|_| serde::de::Error::custom(Error::ParseRenderedNumberError))
+impl TryFrom<RenderedStory> for Story {
+    type Error = Error;
+
+    fn try_from(value: RenderedStory) -> Result<Self, Self::Error> {
+        Ok(Self {
+            character: fixed_story_multiple_array(value.character)?,
+            location: fixed_story_multiple_array(value.location)?,
+            date: fixed_story_multiple_array(value.date)?,
+            story: fixed_string_array(value.story)?,
+        })
+    }
 }
 
-fn number_array_adapter<'de, D, const N: usize>(deserializer: D) -> Result<[u8; N], D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let number_string_array: Vec<String> = serde::Deserialize::deserialize(deserializer)?;
-    let number_array: [u8; N] = number_string_array
-        .into_iter()
-        .map(|number| u8::from_str_radix(&number, 10))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| serde::de::Error::custom(Error::ParseRenderedNumberError))?
+fn fixed_number_array<const N: usize>(value: RenderedSegment) -> Result<[u8; N], Error> {
+    Ok(value
+        .number_array()?
         .try_into()
-        .map_err(|_| serde::de::Error::custom(Error::ParseRenderedNumbeArrayCountError))?;
-    Ok(number_array)
+        .map_err(|_| Error::MatchFixedNumberArrayError)?)
 }
 
-fn ingredient_array_adapter<'de, D>(deserializer: D) -> Result<[Option<String>; 3], D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    let ingredients: [Vec<String>; 3] = serde::Deserialize::deserialize(deserializer)?;
-    Ok(ingredients.map(|mut value| {
-        if value.is_empty() {
-            None
-        } else {
-            Some(value.remove(0))
-        }
-    }))
+fn fixed_string_array<const N: usize>(value: RenderedSegment) -> Result<[String; N], Error> {
+    Ok(value
+        .text_array()?
+        .try_into()
+        .map_err(|_| Error::MatchFixedStringArrayError)?)
+}
+
+fn fixed_story_multiple_array<const N: usize>(
+    value: RenderedSegment,
+) -> Result<[Option<String>; N], Error> {
+    value
+        .multiple_array()?
+        .into_iter()
+        .map(|mut v| {
+            if v.is_empty() {
+                Ok(None)
+            } else {
+                Ok(Some(v.remove(0).text()?))
+            }
+        })
+        .collect::<Result<Vec<_>, Error>>()?
+        .try_into()
+        .map_err(|_| Error::MatchFixedMultipleArrayError)
 }
 
 #[cfg(test)]
 mod test {
-    use crate::core::render::Render;
-    use crate::object::{
-        Character, Date, Location, RenderedCharacter, RenderedDate, RenderedLocation,
-        RenderedStory, Story,
-    };
+    use lazy_static::lazy_static;
+
+    use crate::core::decoder::Language;
+    use crate::core::render::SegmentRender;
+    use crate::object::{RawCharacter, RawDate, RawLocation, RawStory};
 
     const DNA: &str = "0a257cbbf6e9ef6ef62f1fb958ac5349cc985b404f26a7ea1dff13";
 
+    lazy_static! {
+        static ref SEGMENT_RENDER: SegmentRender =
+            SegmentRender::new(Language::CN).expect("segment render");
+    }
+
     #[test]
     fn test_render_character() {
-        let render = Character::new_from_generated()
+        let render = RawCharacter::from_generated()
             .expect("new character")
-            .render(hex::decode(DNA).unwrap())
+            .render(&SEGMENT_RENDER, hex::decode(DNA).unwrap())
             .expect("render charactor");
-        let character: RenderedCharacter = serde_json::from_str(&render).expect("parse render");
-        println!("{character:?}");
+        println!("{render:?}");
     }
 
     #[test]
     fn test_render_location() {
-        let render = Location::new_from_generated()
+        let render = RawLocation::from_generated()
             .expect("new location")
-            .render(hex::decode(DNA).unwrap())
+            .render(&&SEGMENT_RENDER, hex::decode(DNA).unwrap())
             .expect("render charactor");
-        let location: RenderedLocation = serde_json::from_str(&render).expect("parse render");
-        println!("{location:?}");
+        println!("{render:?}");
     }
 
     #[test]
     fn test_render_date() {
-        let render = Date::new_from_generated()
+        let render = RawDate::from_generated()
             .expect("new date")
-            .render(hex::decode(DNA).unwrap())
+            .render(&&SEGMENT_RENDER, hex::decode(DNA).unwrap())
             .expect("render charactor");
-        let date: RenderedDate = serde_json::from_str(&render).expect("parse render");
-        println!("{date:?}");
+        println!("{render:?}");
     }
 
     #[test]
     fn test_render_story() {
-        let render = Story::new_from_generated()
+        let render = RawStory::from_generated()
             .expect("new story")
-            .render(hex::decode(DNA).unwrap())
+            .render(&&SEGMENT_RENDER, hex::decode(DNA).unwrap())
             .expect("render story");
-        let story: RenderedStory = serde_json::from_str(&render).expect("parse render");
-        println!("{story:?}");
+        println!("{render:?}");
     }
 }

@@ -1,7 +1,7 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::error::Error;
 
@@ -28,7 +28,7 @@ pub fn decode_segment(content: &str) -> Result<Segment, Error> {
     Ok(serde_json::from_str(content).map_err(|_| Error::ParseSegmentError)?)
 }
 
-#[derive(Deserialize, Serialize, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Clone)]
 pub enum Selector {
     #[serde(alias = "single")]
     Single,
@@ -36,7 +36,7 @@ pub enum Selector {
     Double,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Clone)]
 pub enum TemplateInstruction {
     #[serde(alias = "range")]
     Range(u8, u8),
@@ -46,32 +46,32 @@ pub enum TemplateInstruction {
     Template(String),
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Clone)]
 pub enum Pool {
     #[serde(alias = "trait_pool")]
     TraitPool(Vec<String>),
     #[serde(alias = "number_pool")]
-    NumberPool(Vec<u16>),
+    NumberPool(Vec<u8>),
     #[serde(alias = "number_range")]
-    NumberRange((u16, u16)),
+    NumberRange((u8, u8)),
     #[serde(alias = "template_pool")]
-    TemplatePool(Vec<String>),
+    TemplatePool(Vec<String>), // after rendering, it will be `Vec<Vec<TemplateInstruction>>`
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Clone)]
 pub struct Pattern {
     pub occupied: u8,
     pub selector: Selector,
     pub pool: Pool,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Clone)]
 pub struct VariablePatterns {
     pub number: Pattern,
     pub patterns: Vec<Pattern>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Clone)]
 pub enum Schema {
     #[serde(alias = "simple")]
     Simple(Pattern),
@@ -83,7 +83,7 @@ pub enum Schema {
     MultipleVariables(Vec<VariablePatterns>),
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize)]
 pub struct Segment {
     pub bytes: u8,
     pub schema: Schema,
