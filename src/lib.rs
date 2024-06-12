@@ -7,3 +7,4 @@ mod generated;
 mod object;
 
 pub mod handler;
+pub use error::Error::InvalidCombination;

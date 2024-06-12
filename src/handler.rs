@@ -6,11 +6,6 @@ use crate::core::render::Render;
 use crate::error::Error;
 use crate::object::{Character, Date, Location, Story};
 
-pub struct Parameters {
-    pub dna: Vec<u8>,
-    pub language: Language,
-}
-
 #[repr(u8)]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 enum ObjectType {
@@ -32,8 +27,8 @@ impl From<u8> for ObjectType {
     }
 }
 
-pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Parameters, Error> {
-    if args.len() != 2 {
+pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Vec<u8>, Error> {
+    if args.is_empty() {
         return Err(Error::InvalidArgsLength);
     }
     let dna = {
@@ -43,17 +38,11 @@ pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Parameters, Error> {
         }
         dna
     };
-    let language = {
-        let language =
-            String::from_utf8(args[1].to_vec()).map_err(|_| Error::InvalidLanguageInArgs)?;
-        language.try_into()?
-    };
-    Ok(Parameters { dna, language })
+    Ok(dna)
 }
 
-pub fn dobs_decode(parameters: Parameters) -> Result<Vec<u8>, Error> {
-    set_decoder_language(parameters.language)?;
-    let mut dna = parameters.dna;
+pub fn dobs_decode(mut dna: Vec<u8>) -> Result<Vec<u8>, Error> {
+    set_decoder_language(Language::CN)?;
     match ObjectType::from(dna.remove(0)) {
         ObjectType::Character => Character::new_from_generated()?.render(dna),
         ObjectType::Location => Location::new_from_generated()?.render(dna),

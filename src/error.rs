@@ -1,13 +1,13 @@
 macro_rules! casting_error {
     (
         pub enum $name:ident {
-            $($error:ident ,)+
+            $($error:ident $( = $n:expr)? ,)+
         }
     ) => {
         #[repr(u64)]
         #[derive(Debug)]
         pub enum $name {
-            $($error ,)+
+            $($error $( = $n)? ,)+
         }
 
         impl core::fmt::Display for $name {
@@ -36,7 +36,7 @@ macro_rules! casting_error {
 
 casting_error!(
     pub enum Error {
-        ParseLanguageTraitPoolError,
+        ParseLanguageTraitPoolError = 100,
         ParseLanguageTemplatePoolError,
         ParseLanguageParagraphPoolError,
         ParseSegmentError,

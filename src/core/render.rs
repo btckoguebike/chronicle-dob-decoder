@@ -103,8 +103,13 @@ fn render_pattern(pattern: Pattern, bytes: &mut Vec<u8>) -> Result<String, Error
             format!("{value}")
         }
         Pool::TemplatePool(value) => {
-            let templates = PoolSelector::new(value, pattern_bytes)?.select_by(pattern.selector)?;
-            render_template_by_single(templates, bytes)?
+            if value.is_empty() {
+                String::new()
+            } else {
+                let templates =
+                    PoolSelector::new(value, pattern_bytes)?.select_by(pattern.selector)?;
+                render_template_by_single(templates, bytes)?
+            }
         }
     };
     Ok(render_result)
