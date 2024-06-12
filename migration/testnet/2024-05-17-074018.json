@@ -1,0 +1,13 @@
+{
+  "cell_recipes": [
+    {
+      "name": "chronicle-decoder",
+      "tx_hash": "0xf3eb9ec0e88d30900517c3d23507f5d03ad6e3bb46609284d2e67ffa8dc57c27",
+      "index": 0,
+      "occupied_capacity": 17368600000000,
+      "data_hash": "0xf8d1ba27e4d589b5ce7b4e6fd7eba30fc632994fb90160f1123d910e72a22933",
+      "type_id": "0x646c90688372bcc0ee54e47be97f788ef9bec7a7da48d23a1ede7fd96a96f901"
+    }
+  ],
+  "dep_group_recipes": []
+}
