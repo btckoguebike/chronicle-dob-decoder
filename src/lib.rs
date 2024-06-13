@@ -3,8 +3,9 @@
 extern crate alloc;
 mod error;
 
-pub mod core;
+pub mod decoder;
 pub mod generated;
 pub mod handler;
 pub mod object;
+pub mod schema;
 pub use error::Error::InvalidCombination;

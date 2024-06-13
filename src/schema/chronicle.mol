@@ -1,0 +1,96 @@
+vector UTF8Bytes <byte>;
+
+vector TraitPool <UTF8Bytes>;
+vector NumberPool <byte>;
+table NumberRange {
+    min: byte,
+    max: byte,
+}
+
+union Instruction {
+    NumberRange,
+    NumberPool,
+    UTF8Bytes,
+}
+vector InstructionVec <Instruction>;
+vector TemplatePool <InstructionVec>;
+
+union Pool {
+    TraitPool,
+    NumberPool,
+    NumberRange,
+    TemplatePool,
+}
+
+table Segment {
+    segment_bytes: byte,
+    pool: Pool,
+}
+
+vector SegmentVec <Segment>;
+
+table VariableSegment {
+    count: Segment,
+    segments: SegmentVec,
+}
+
+vector VariableSegmentVec <VariableSegment>;
+
+union Pattern {
+    Segment,
+    SegmentVec,
+    VariableSegment,
+    VariableSegmentVec,
+}
+
+table Schema {
+    occupied_bytes: byte,
+    pattern: Pattern,
+}
+
+table CharacterSchema {
+    adjective: Schema,
+    name: Schema,
+    profession: Schema,
+    hp: Schema,
+    power: Schema,
+    attack: Schema,
+    defense: Schema,
+    gold: Schema,
+    card: Schema,
+}
+
+table LocationSchema {
+    adjective: Schema,
+    name: Schema,
+    belonging: Schema,
+    coordinate: Schema,
+    area: Schema,
+    color: Schema,
+    commodity: Schema,
+}
+
+table DateSchema {
+    era: Schema,
+    year: Schema,
+    time: Schema,
+    weather: Schema,
+    holiday: Schema,
+    season: Schema,
+    background: Schema,
+    effect: Schema,
+}
+
+table StorySchema {
+    character: Schema,
+    location: Schema,
+    date: Schema,
+    event: Schema,
+}
+
+table AshWarChronicle {
+    character_schema: CharacterSchema,
+    location_schema: LocationSchema,
+    date_schema: DateSchema,
+    story_schema: StorySchema,
+}

@@ -1,10 +1,12 @@
-use alloc::string::{String, ToString};
+use alloc::string::ToString;
 use alloc::vec::Vec;
+use molecule::prelude::Entity;
 
-use crate::core::decoder::{set_decoder_language, Language};
-use crate::core::render::Render;
+use crate::decoder::{decode_character, decode_date, decode_location, decode_story};
 use crate::error::Error;
-use crate::object::{Character, Date, Location, Story};
+use crate::generated::MOL_CHRONICLE_SCHEMA;
+use crate::object::ParsedDNA;
+use crate::schema::AshWarChronicle;
 
 #[repr(u8)]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
@@ -42,36 +44,41 @@ pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Vec<u8>, Error> {
 }
 
 pub fn dobs_decode(mut dna: Vec<u8>) -> Result<Vec<u8>, Error> {
-    set_decoder_language(Language::CN)?;
-    match ObjectType::from(dna.remove(0)) {
-        ObjectType::Character => Character::new_from_generated()?.render(dna),
-        ObjectType::Location => Location::new_from_generated()?.render(dna),
-        ObjectType::Date => Date::new_from_generated()?.render(dna),
-        ObjectType::Story => Story::new_from_generated()?.render(dna),
-    }
-    .map(|value| value.as_bytes().to_vec())
+    let chronicle =
+        AshWarChronicle::from_compatible_slice(MOL_CHRONICLE_SCHEMA).expect("chronicle init");
+    let result: Vec<ParsedDNA> = match ObjectType::from(dna.remove(0)) {
+        ObjectType::Character => decode_character(chronicle.character_schema(), dna)?.into(),
+        ObjectType::Location => decode_location(chronicle.location_schema(), dna)?.into(),
+        ObjectType::Date => decode_date(chronicle.date_schema(), dna)?.into(),
+        ObjectType::Story => decode_story(chronicle.story_schema(), dna)?.into(),
+    };
+    Ok(serde_json::to_string(&result)
+        .expect("encode result")
+        .as_bytes()
+        .to_vec())
 }
 
-pub fn dobs_check_composable(dna_set: [String; 4]) -> Result<bool, Error> {
+pub fn dobs_check_composable(dna_set: [Vec<u8>; 4]) -> Result<bool, Error> {
     let mut character = None;
     let mut location = None;
     let mut date = None;
     let mut story = None;
 
-    dna_set.into_iter().try_for_each(|hexed_dna| {
-        let mut dna = hex::decode(hexed_dna).map_err(|_| Error::InvalidHexedDNAInArgs)?;
+    let chronicle =
+        AshWarChronicle::from_compatible_slice(MOL_CHRONICLE_SCHEMA).expect("chronicle init");
+    dna_set.into_iter().try_for_each(|mut dna| {
         match ObjectType::from(dna.remove(0)) {
             ObjectType::Character => {
-                character = Some(Character::new_from_generated()?.render_to_object(dna)?);
+                character = Some(decode_character(chronicle.character_schema(), dna)?);
             }
             ObjectType::Location => {
-                location = Some(Location::new_from_generated()?.render_to_object(dna)?);
+                location = Some(decode_location(chronicle.location_schema(), dna)?);
             }
             ObjectType::Date => {
-                date = Some(Date::new_from_generated()?.render_to_object(dna)?);
+                date = Some(decode_date(chronicle.date_schema(), dna)?);
             }
             ObjectType::Story => {
-                story = Some(Story::new_from_generated()?.render_to_object(dna)?);
+                story = Some(decode_story(chronicle.story_schema(), dna)?);
             }
         };
         Result::<_, Error>::Ok(())

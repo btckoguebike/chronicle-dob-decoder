@@ -1,63 +1,47 @@
-macro_rules! casting_error {
-    (
-        pub enum $name:ident {
-            $($error:ident $( = $n:expr)? ,)+
-        }
-    ) => {
-        #[repr(u64)]
-        #[derive(Debug)]
-        pub enum $name {
-            $($error $( = $n)? ,)+
-        }
+#[derive(Clone, Debug)]
+pub enum Error {
+    DecodeVariableNumberPoolError = 100,
+    DecodePatternCountError,
+    DecodeAssembleSingleSelectorError,
+    DecodeAssembleDoubleSelectorError,
+    DecodePoolEmptyError,
+    DecodeTemplateElementsCountError,
 
-        impl core::fmt::Display for $name {
-            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-                let error = match self {
-                    $(
-                        Self::$error => stringify!($error),
-                    )+
-                };
-                f.write_str(error)
-            }
-        }
+    ParseCharacterAdjectiveError,
+    ParseCharacterNameError,
+    ParseCharacterProfessionError,
+    ParseCharacterHpError,
+    ParseCharacterPowerError,
+    ParseCharacterAttackError,
+    ParseCharacterDefenseError,
+    ParseCharacterGoldError,
+    ParseCharacterCardError,
 
-        impl From<alloc::string::String> for Error {
-            fn from(value: alloc::string::String) -> Self {
-                match value.as_str() {
-                    $(
-                        stringify!($error) => Self::$error,
-                    )+
-                    _ => Self::InvalidErrorString,
-                }
-            }
-        }
-    };
+    ParseLocationAdjectiveError,
+    ParseLocationNameError,
+    ParseLocationBelongingError,
+    ParseLocationCoordinateError,
+    ParseLocationAreaError,
+    ParseLocationColorError,
+    ParseLocationCommodityError,
+
+    ParseDateEraError,
+    ParseDateYearError,
+    ParseDateTimeError,
+    ParseDateHolidayError,
+    ParseDateSeasonError,
+    ParseDateWeatherError,
+    ParseDateBackgroundError,
+    ParseDateEffectError,
+
+    ParseStoryCharacterError,
+    ParseStoryLocationError,
+    ParseStoryDateError,
+    ParseStoryEventError,
+
+    InvalidArgsLength,
+    InvalidHexedDNAInArgs,
+    InvalidLanguageInArgs,
+    InvalidEmptyDNA,
+    InvalidCombination,
 }
-
-casting_error!(
-    pub enum Error {
-        ParseLanguageTraitPoolError = 100,
-        ParseLanguageTemplatePoolError,
-        ParseLanguageParagraphPoolError,
-        ParseSegmentError,
-        ParseRenderedNumberError,
-        ParseRenderedNumbeArrayCountError,
-
-        RenderVariableNumberPoolError,
-        RenderPatternCountError,
-        RenderAssembleSingleSelectorError,
-        RenderAssembleDoubleSelectorError,
-        RenderPoolEmptyError,
-        RenderTemplateElementsCountError,
-        RenderObjectError,
-        RenderToObjectError,
-
-        InvalidArgsLength,
-        InvalidHexedDNAInArgs,
-        InvalidLanguageInArgs,
-        InvalidEmptyDNA,
-        InvalidCombination,
-
-        InvalidErrorString,
-    }
-);
