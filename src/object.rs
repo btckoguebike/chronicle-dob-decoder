@@ -79,17 +79,17 @@ pub struct Character {
 
 impl From<Character> for Vec<ParsedDNA> {
     fn from(character: Character) -> Self {
-        let mut parsed_dna = Vec::new();
-        parsed_dna.push(parse_single!(character, adjective, String));
-        parsed_dna.push(parse_single!(character, name, String));
-        parsed_dna.push(parse_single!(character, profession, String));
-        parsed_dna.push(parse_single!(character, hp, Number));
-        parsed_dna.push(parse_single!(character, power, Number));
-        parsed_dna.push(parse_single!(character, attack, Number));
-        parsed_dna.push(parse_single!(character, defense, Number));
-        parsed_dna.push(parse_single!(character, gold, Number));
-        parsed_dna.push(parse_multiple!(character, card, String));
-        parsed_dna
+        vec![
+            parse_single!(character, adjective, String),
+            parse_single!(character, name, String),
+            parse_single!(character, profession, String),
+            parse_single!(character, hp, Number),
+            parse_single!(character, power, Number),
+            parse_single!(character, attack, Number),
+            parse_single!(character, defense, Number),
+            parse_single!(character, gold, Number),
+            parse_multiple!(character, card, String),
+        ]
     }
 }
 
@@ -106,28 +106,24 @@ pub struct Location {
 
 impl From<Location> for Vec<ParsedDNA> {
     fn from(location: Location) -> Self {
-        let mut parsed_dna = Vec::new();
-        parsed_dna.push(parse_single!(location, adjective, String));
-        parsed_dna.push(parse_single!(location, name, String));
-        parsed_dna.push(parse_single!(location, belonging, String));
-        parsed_dna.push(parse_single!(
-            location,
-            coordinate,
-            String,
-            |v: [u8; 2]| format!("({}, {})", v[0], v[1])
-        ));
-        parsed_dna.push(parse_single!(location, area, String, |v: [u8; 2]| format!(
-            "{} x {}",
-            v[0], v[1]
-        )));
-        parsed_dna.push(parse_single!(
-            location,
-            color,
-            String,
-            |v: [u8; 4]| format!("#{:02X}{:02X}{:02X}{:02X}", v[0], v[1], v[2], v[3])
-        ));
-        parsed_dna.push(parse_multiple!(location, commodity, String));
-        parsed_dna
+        vec![
+            parse_single!(location, adjective, String),
+            parse_single!(location, name, String),
+            parse_single!(location, belonging, String),
+            parse_single!(location, coordinate, String, |v: [u8; 2]| format!(
+                "({}, {})",
+                v[0], v[1]
+            )),
+            parse_single!(location, area, String, |v: [u8; 2]| format!(
+                "{} x {}",
+                v[0], v[1]
+            )),
+            parse_single!(location, color, String, |v: [u8; 4]| format!(
+                "#{:02X}{:02X}{:02X}{:02X}",
+                v[0], v[1], v[2], v[3]
+            )),
+            parse_multiple!(location, commodity, String),
+        ]
     }
 }
 
@@ -145,21 +141,19 @@ pub struct Date {
 
 impl From<Date> for Vec<ParsedDNA> {
     fn from(date: Date) -> Self {
-        let mut parsed_dna = Vec::new();
-        parsed_dna.push(parse_single!(date, era, String));
-        parsed_dna.push(parse_single!(date, year, Number));
-        parsed_dna.push(parse_single!(date, time, String));
-        parsed_dna.push(parse_single!(date, weather, String));
-        parsed_dna.push(parse_single!(date, holiday, String));
-        parsed_dna.push(parse_single!(date, season, String));
-        parsed_dna.push(parse_single!(
-            date,
-            background,
-            String,
-            |v: [u8; 4]| format!("#{:02X}{:02X}{:02X}{:02X}", v[0], v[1], v[2], v[3])
-        ));
-        parsed_dna.push(parse_multiple!(date, effect, String));
-        parsed_dna
+        vec![
+            parse_single!(date, era, String),
+            parse_single!(date, year, Number),
+            parse_single!(date, time, String),
+            parse_single!(date, weather, String),
+            parse_single!(date, holiday, String),
+            parse_single!(date, season, String),
+            parse_single!(date, background, String, |v: [u8; 4]| format!(
+                "#{:02X}{:02X}{:02X}{:02X}",
+                v[0], v[1], v[2], v[3]
+            )),
+            parse_multiple!(date, effect, String),
+        ]
     }
 }
 
@@ -173,26 +167,17 @@ pub struct Story {
 
 impl From<Story> for Vec<ParsedDNA> {
     fn from(value: Story) -> Self {
-        let mut parsed_dna = Vec::new();
-        parsed_dna.push(parse_single!(
-            value,
-            character,
-            String,
-            |v: [Option<String>; 3]| v.map(|value| value.unwrap_or("_".to_string())).join("|")
-        ));
-        parsed_dna.push(parse_single!(
-            value,
-            location,
-            String,
-            |v: [Option<String>; 3]| v.map(|value| value.unwrap_or("_".to_string())).join("|")
-        ));
-        parsed_dna.push(parse_single!(
-            value,
-            date,
-            String,
-            |v: [Option<String>; 3]| v.map(|value| value.unwrap_or("_".to_string())).join("|")
-        ));
-        parsed_dna.push(parse_multiple!(value, event, String));
-        parsed_dna
+        vec![
+            parse_single!(value, character, String, |v: [Option<String>; 3]| v
+                .map(|value| value.unwrap_or("_".to_string()))
+                .join("|")),
+            parse_single!(value, location, String, |v: [Option<String>; 3]| v
+                .map(|value| value.unwrap_or("_".to_string()))
+                .join("|")),
+            parse_single!(value, date, String, |v: [Option<String>; 3]| v
+                .map(|value| value.unwrap_or("_".to_string()))
+                .join("|")),
+            parse_multiple!(value, event, String),
+        ]
     }
 }

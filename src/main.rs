@@ -5,7 +5,10 @@ extern crate alloc;
 use core::ffi::CStr;
 
 use alloc::{format, vec::Vec};
-use chronicle_decoder::handler::{dobs_decode, dobs_parse_parameters};
+use chronicle_decoder::{
+    handler::{dobs_check_composable, dobs_decode, dobs_parse_parameters, Parameters},
+    InvalidCombination,
+};
 
 const HEAPS_SIZE: usize = 1024 * 64;
 
@@ -74,12 +77,19 @@ unsafe extern "C" fn main(argc: u64, argv: *const *const i8) -> u64 {
         Ok(value) => value,
         Err(err) => return err as u64,
     };
-    match dobs_decode(dob_params) {
-        Ok(mut bytes) => {
-            bytes.push(0);
-            syscall_write(bytes.as_ptr() as *const u8);
-            return 0;
-        }
-        Err(error) => return error as u64,
+    match dob_params {
+        Parameters::Single(dna) => match dobs_decode(dna) {
+            Ok(mut bytes) => {
+                bytes.push(0);
+                syscall_write(bytes.as_ptr() as *const u8);
+                return 0;
+            }
+            Err(error) => error as u64,
+        },
+        Parameters::Multiple(dna_set) => match dobs_check_composable(dna_set) {
+            Ok(true) => 0,
+            Ok(false) => InvalidCombination as u64,
+            Err(error) => error as u64,
+        },
     }
 }

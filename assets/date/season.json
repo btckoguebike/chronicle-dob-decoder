@@ -1,0 +1,12 @@
+{
+    "pattern_bytes": 1,
+    "segment": {
+        "bytes": 1,
+        "trait_pool": [
+            "春天",
+            "夏天",
+            "秋天",
+            "冬天"
+        ]
+    }
+}

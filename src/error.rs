@@ -1,3 +1,4 @@
+#![allow(clippy::all)]
 #[derive(Clone, Debug)]
 pub enum Error {
     DecodeVariableNumberPoolError = 100,

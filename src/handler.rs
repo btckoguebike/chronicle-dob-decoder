@@ -1,12 +1,12 @@
 use alloc::string::ToString;
 use alloc::vec::Vec;
+use chronicle_schema::AshWarChronicle;
 use molecule::prelude::Entity;
 
 use crate::decoder::{decode_character, decode_date, decode_location, decode_story};
 use crate::error::Error;
 use crate::generated::MOL_CHRONICLE_SCHEMA;
 use crate::object::ParsedDNA;
-use crate::schema::AshWarChronicle;
 
 #[repr(u8)]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
@@ -29,23 +29,42 @@ impl From<u8> for ObjectType {
     }
 }
 
-pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Vec<u8>, Error> {
+pub enum Parameters {
+    Single(Vec<u8>),
+    Multiple([Vec<u8>; 4]),
+}
+
+pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Parameters, Error> {
     if args.is_empty() {
         return Err(Error::InvalidArgsLength);
     }
-    let dna = {
-        let dna = hex::decode(args[0]).map_err(|_| Error::InvalidHexedDNAInArgs)?;
-        if dna.is_empty() {
-            return Err(Error::InvalidEmptyDNA);
-        }
-        dna
-    };
-    Ok(dna)
+    if args.len() < 4 {
+        let dna = {
+            let dna = hex::decode(args[0]).map_err(|_| Error::InvalidHexedDNAInArgs)?;
+            if dna.is_empty() {
+                return Err(Error::InvalidEmptyDNA);
+            }
+            dna
+        };
+        Ok(Parameters::Single(dna))
+    } else {
+        let dna_set = args[..4]
+            .iter()
+            .map(|arg| {
+                let dna = hex::decode(arg).map_err(|_| Error::InvalidHexedDNAInArgs)?;
+                if dna.is_empty() {
+                    return Err(Error::InvalidEmptyDNA);
+                }
+                Ok(dna)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Parameters::Multiple(dna_set.try_into().unwrap()))
+    }
 }
 
 pub fn dobs_decode(mut dna: Vec<u8>) -> Result<Vec<u8>, Error> {
     let chronicle =
-        AshWarChronicle::from_compatible_slice(MOL_CHRONICLE_SCHEMA).expect("chronicle init");
+        AshWarChronicle::from_compatible_slice(&MOL_CHRONICLE_SCHEMA).expect("chronicle init");
     let result: Vec<ParsedDNA> = match ObjectType::from(dna.remove(0)) {
         ObjectType::Character => decode_character(chronicle.character_schema(), dna)?.into(),
         ObjectType::Location => decode_location(chronicle.location_schema(), dna)?.into(),
@@ -65,7 +84,7 @@ pub fn dobs_check_composable(dna_set: [Vec<u8>; 4]) -> Result<bool, Error> {
     let mut story = None;
 
     let chronicle =
-        AshWarChronicle::from_compatible_slice(MOL_CHRONICLE_SCHEMA).expect("chronicle init");
+        AshWarChronicle::from_compatible_slice(&MOL_CHRONICLE_SCHEMA).expect("chronicle init");
     dna_set.into_iter().try_for_each(|mut dna| {
         match ObjectType::from(dna.remove(0)) {
             ObjectType::Character => {

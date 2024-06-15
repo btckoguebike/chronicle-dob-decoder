@@ -1,0 +1,19 @@
+{
+    "pattern_bytes": 2,
+    "segment_vec": [
+        {
+            "bytes": 1,
+            "number_range": [
+                1,
+                4
+            ]
+        },
+        {
+            "bytes": 1,
+            "number_range": [
+                1,
+                4
+            ]
+        }
+    ]
+}

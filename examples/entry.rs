@@ -6,7 +6,7 @@ use chronicle_decoder::decoder::{decode_character, decode_date, decode_location,
 use chronicle_decoder::generated::MOL_CHRONICLE_SCHEMA;
 use chronicle_decoder::handler::{dobs_check_composable, dobs_decode};
 use chronicle_decoder::object::ParsedDNA;
-use chronicle_decoder::schema::AshWarChronicle;
+use chronicle_schema::AshWarChronicle;
 use molecule::prelude::Entity;
 
 extern crate alloc;
@@ -16,7 +16,7 @@ fn main() {
     match case.as_str() {
         "debug_decode" => {
             let chronicle =
-                AshWarChronicle::from_compatible_slice(MOL_CHRONICLE_SCHEMA).expect("init");
+                AshWarChronicle::from_compatible_slice(&MOL_CHRONICLE_SCHEMA).expect("init");
             let dna = {
                 let hexed_dna = env::args().nth(2).expect("DNA is required");
                 hex::decode(hexed_dna).expect("encode dna")

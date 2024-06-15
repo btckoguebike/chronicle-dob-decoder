@@ -1,0 +1,32 @@
+{
+    "pattern_bytes": 6,
+    "variable_segment_vec": [
+        {
+            "count": {
+                "bytes": 1,
+                "number_pool": [
+                    0
+                ]
+            },
+            "segments": []
+        },
+        {
+            "count": {
+                "bytes": 1,
+                "number_pool": [
+                    0
+                ]
+            },
+            "segments": []
+        },
+        {
+            "count": {
+                "bytes": 1,
+                "number_pool": [
+                    0
+                ]
+            },
+            "segments": []
+        }
+    ]
+}

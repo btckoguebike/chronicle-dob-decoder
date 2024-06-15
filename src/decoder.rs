@@ -4,19 +4,15 @@ use alloc::{
     vec,
     vec::{IntoIter, Vec},
 };
+use chronicle_schema::{
+    CharacterSchema, DateSchema, Instruction, InstructionUnion, LocationSchema, PatternUnion,
+    PoolUnion, Schema, Segment, StorySchema, VariableSegment,
+};
 use serde_json::Value;
 
-use crate::{error::Error, schema::LocationSchema};
 use crate::{
-    object::Story,
-    schema::{
-        CharacterSchema, Instruction, InstructionUnion, PatternUnion, PoolUnion, Schema, Segment,
-        StorySchema, VariableSegment,
-    },
-};
-use crate::{
-    object::{Character, Date, Location},
-    schema::DateSchema,
+    error::Error,
+    object::{Character, Date, Location, Story},
 };
 
 struct PoolSelector<T: Clone> {
@@ -63,7 +59,7 @@ fn decode_segment(segment: Segment, dna_bytes: &mut Vec<u8>) -> Result<Value, Er
             Value::String(value)
         }
         PoolUnion::NumberPool(value) => {
-            let value = value.into_iter().map(|v| u8::from(v)).collect();
+            let value = value.into_iter().map(u8::from).collect();
             let value = PoolSelector::new(value, occupied_bytes)?.select()?;
             Value::Number(value.into())
         }
@@ -99,7 +95,7 @@ fn decode_template_instructions(
     for instruction in instructions {
         match instruction.to_enum() {
             InstructionUnion::NumberPool(value) => {
-                let value = value.into_iter().map(|v| u8::from(v)).collect();
+                let value = value.into_iter().map(u8::from).collect();
                 let value =
                     PoolSelector::new(value, dna_bytes.splice(0..1, vec![]).collect())?.select()?;
                 pending_values.push(value);
@@ -117,7 +113,7 @@ fn decode_template_instructions(
                 match pending_values.len() {
                     0 => results.push(template),
                     1 => {
-                        let parts = template.split("x").collect::<Vec<_>>();
+                        let parts = template.split('x').collect::<Vec<_>>();
                         assert!(parts.len() == 2);
                         results.push(format!(
                             "{}{}{}",
@@ -127,7 +123,7 @@ fn decode_template_instructions(
                         ))
                     }
                     2 => {
-                        let parts = template.split("x").collect::<Vec<_>>();
+                        let parts = template.split('x').collect::<Vec<_>>();
                         assert!(parts.len() == 3);
                         results.push(format!(
                             "{}{}{}{}{}",
@@ -154,7 +150,7 @@ fn decode_variable_segment(
     let occupied_bytes = dna_bytes.splice(0..occupied, vec![]).collect::<Vec<_>>();
     let count = match variable.count().pool().to_enum() {
         PoolUnion::NumberPool(value) => {
-            let value = value.into_iter().map(|v| u8::from(v)).collect();
+            let value = value.into_iter().map(u8::from).collect();
             PoolSelector::new(value, occupied_bytes)?.select()?
         }
         PoolUnion::NumberRange(value) => {

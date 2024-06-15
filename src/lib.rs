@@ -7,5 +7,4 @@ pub mod decoder;
 pub mod generated;
 pub mod handler;
 pub mod object;
-pub mod schema;
 pub use error::Error::InvalidCombination;

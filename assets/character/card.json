@@ -1,0 +1,80 @@
+{
+    "pattern_bytes": 7,
+    "variable_segment": {
+        "count": {
+            "bytes": 1,
+            "number_pool": [
+                1,
+                2,
+                2,
+                2,
+                2,
+                3,
+                3
+            ]
+        },
+        "segments": [
+            {
+                "bytes": 1,
+                "template_pool": [
+                    "CARD_01",
+                    "CARD_02"
+                ]
+            },
+            {
+                "bytes": 1,
+                "template_pool": [
+                    "CARD_01",
+                    "CARD_02"
+                ]
+            },
+            {
+                "bytes": 1,
+                "template_pool": [
+                    "CARD_01",
+                    "CARD_02"
+                ]
+            }
+        ]
+    },
+    "CARD_01": [
+        {
+            "range": [
+                0,
+                3
+            ]
+        },
+        {
+            "template": "攻击 [x]"
+        },
+        {
+            "range": [
+                6,
+                10
+            ]
+        },
+        {
+            "template": "造成 x 点伤害"
+        }
+    ],
+    "CARD_02": [
+        {
+            "range": [
+                0,
+                3
+            ]
+        },
+        {
+            "template": "闪电击 [x]"
+        },
+        {
+            "range": [
+                6,
+                12
+            ]
+        },
+        {
+            "template": "对所有敌人造成 x 点伤害"
+        }
+    ]
+}
