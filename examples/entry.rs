@@ -2,7 +2,9 @@
 
 use std::env;
 
-use chronicle_decoder::decoder::{decode_character, decode_date, decode_location, decode_story};
+use chronicle_decoder::decoder::{
+    decode_chronicle, decode_environment, decode_player, decode_scene,
+};
 use chronicle_decoder::generated::MOL_CHRONICLE_SCHEMA;
 use chronicle_decoder::handler::{dobs_check_composable, dobs_decode};
 use chronicle_decoder::object::ParsedDNA;
@@ -12,34 +14,33 @@ use molecule::prelude::Entity;
 extern crate alloc;
 
 fn main() {
-    let case = env::args().nth(1).expect("need case");
+    let case = env::args().nth(1).unwrap_or("debug_decode".to_string());
     match case.as_str() {
         "debug_decode" => {
-            let chronicle =
-                AshWarChronicle::from_compatible_slice(&MOL_CHRONICLE_SCHEMA).expect("init");
+            let awc = AshWarChronicle::from_compatible_slice(&MOL_CHRONICLE_SCHEMA).expect("init");
             let dna = {
-                let hexed_dna = env::args().nth(2).expect("DNA is required");
+                let hexed_dna = env::args()
+                    .nth(2)
+                    .unwrap_or("ac7b88aabbcc687474703a2f2f3132372e302e302e".to_string());
                 hex::decode(hexed_dna).expect("encode dna")
             };
-            let character: Vec<ParsedDNA> =
-                decode_character(chronicle.character_schema(), dna.clone())
-                    .expect("character")
-                    .into();
-            let location: Vec<ParsedDNA> =
-                decode_location(chronicle.location_schema(), dna.clone())
-                    .expect("location")
-                    .into();
-            let date: Vec<ParsedDNA> = decode_date(chronicle.date_schema(), dna.clone())
-                .expect("date")
+            let player: Vec<ParsedDNA> = decode_player(awc.player(), dna.clone())
+                .expect("player")
                 .into();
-            let story: Vec<ParsedDNA> = decode_story(chronicle.story_schema(), dna)
-                .expect("story")
+            let scene: Vec<ParsedDNA> = decode_scene(awc.scene(), dna.clone())
+                .expect("scene")
+                .into();
+            let environment: Vec<ParsedDNA> = decode_environment(awc.envionment(), dna.clone())
+                .expect("environment")
+                .into();
+            let chronicle: Vec<ParsedDNA> = decode_chronicle(awc.chronicle(), dna)
+                .expect("chronicle")
                 .into();
 
-            println!("[人物]\n{}\n", serde_json::to_string(&character).unwrap());
-            println!("[地点]\n{}\n", serde_json::to_string(&location).unwrap());
-            println!("[时间]\n{}\n", serde_json::to_string(&date).unwrap());
-            println!("[故事]\n{}\n", serde_json::to_string(&story).unwrap());
+            println!("[玩家]\n{}\n", serde_json::to_string(&player).unwrap());
+            println!("[场景]\n{}\n", serde_json::to_string(&scene).unwrap());
+            println!("[环境]\n{}\n", serde_json::to_string(&environment).unwrap());
+            println!("[历史]\n{}\n", serde_json::to_string(&chronicle).unwrap());
         }
         "decode" => {
             let dna = {

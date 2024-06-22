@@ -60,10 +60,10 @@ mod casting {
                                     instruction = instruction
                                         .set::<InstructionUnion>(NumberRange::from(range).into());
                                 } else if let Some(pool) = v.get("pool") {
-                                    let pool: Vec<u8> = serde_json::from_value(pool.clone())
+                                    let pool: Vec<String> = serde_json::from_value(pool.clone())
                                         .map_err(|_| "invalid number pool")?;
                                     instruction = instruction
-                                        .set::<InstructionUnion>(NumberPool::from(pool).into());
+                                        .set::<InstructionUnion>(TraitPool::from(pool).into());
                                 } else if let Some(template) = v.get("template") {
                                     let template: String = serde_json::from_value(template.clone())
                                         .map_err(|_| "invalid template")?;

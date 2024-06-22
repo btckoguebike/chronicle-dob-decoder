@@ -1,9 +1,8 @@
-use alloc::string::ToString;
 use alloc::vec::Vec;
 use chronicle_schema::AshWarChronicle;
 use molecule::prelude::Entity;
 
-use crate::decoder::{decode_character, decode_date, decode_location, decode_story};
+use crate::decoder::{decode_chronicle, decode_environment, decode_player, decode_scene};
 use crate::error::Error;
 use crate::generated::MOL_CHRONICLE_SCHEMA;
 use crate::object::ParsedDNA;
@@ -11,19 +10,19 @@ use crate::object::ParsedDNA;
 #[repr(u8)]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy)]
 enum ObjectType {
-    Character,
-    Location,
-    Date,
-    Story,
+    Player,
+    Scene,
+    Environment,
+    Chronicle,
 }
 
 impl From<u8> for ObjectType {
     fn from(value: u8) -> Self {
         match value % 4 {
-            0 => Self::Character,
-            1 => Self::Location,
-            2 => Self::Date,
-            3 => Self::Story,
+            0 => Self::Player,
+            1 => Self::Scene,
+            2 => Self::Environment,
+            3 => Self::Chronicle,
             _ => unreachable!(),
         }
     }
@@ -63,13 +62,13 @@ pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Parameters, Error> {
 }
 
 pub fn dobs_decode(mut dna: Vec<u8>) -> Result<Vec<u8>, Error> {
-    let chronicle =
+    let awc =
         AshWarChronicle::from_compatible_slice(&MOL_CHRONICLE_SCHEMA).expect("chronicle init");
     let result: Vec<ParsedDNA> = match ObjectType::from(dna.remove(0)) {
-        ObjectType::Character => decode_character(chronicle.character_schema(), dna)?.into(),
-        ObjectType::Location => decode_location(chronicle.location_schema(), dna)?.into(),
-        ObjectType::Date => decode_date(chronicle.date_schema(), dna)?.into(),
-        ObjectType::Story => decode_story(chronicle.story_schema(), dna)?.into(),
+        ObjectType::Player => decode_player(awc.player(), dna)?.into(),
+        ObjectType::Scene => decode_scene(awc.scene(), dna)?.into(),
+        ObjectType::Environment => decode_environment(awc.envionment(), dna)?.into(),
+        ObjectType::Chronicle => decode_chronicle(awc.chronicle(), dna)?.into(),
     };
     Ok(serde_json::to_string(&result)
         .expect("encode result")
@@ -78,49 +77,49 @@ pub fn dobs_decode(mut dna: Vec<u8>) -> Result<Vec<u8>, Error> {
 }
 
 pub fn dobs_check_composable(dna_set: [Vec<u8>; 4]) -> Result<bool, Error> {
-    let mut character = None;
-    let mut location = None;
-    let mut date = None;
-    let mut story = None;
+    let mut player = None;
+    let mut scene = None;
+    let mut environment = None;
+    let mut chronicle = None;
 
-    let chronicle =
+    let awc =
         AshWarChronicle::from_compatible_slice(&MOL_CHRONICLE_SCHEMA).expect("chronicle init");
     dna_set.into_iter().try_for_each(|mut dna| {
         match ObjectType::from(dna.remove(0)) {
-            ObjectType::Character => {
-                character = Some(decode_character(chronicle.character_schema(), dna)?);
+            ObjectType::Player => {
+                player = Some(decode_player(awc.player(), dna)?);
             }
-            ObjectType::Location => {
-                location = Some(decode_location(chronicle.location_schema(), dna)?);
+            ObjectType::Scene => {
+                scene = Some(decode_scene(awc.scene(), dna)?);
             }
-            ObjectType::Date => {
-                date = Some(decode_date(chronicle.date_schema(), dna)?);
+            ObjectType::Environment => {
+                environment = Some(decode_environment(awc.envionment(), dna)?);
             }
-            ObjectType::Story => {
-                story = Some(decode_story(chronicle.story_schema(), dna)?);
+            ObjectType::Chronicle => {
+                chronicle = Some(decode_chronicle(awc.chronicle(), dna)?);
             }
         };
         Result::<_, Error>::Ok(())
     })?;
 
     // Check if all objects are present
-    let (Some(character), Some(location), Some(date), Some(story)) =
-        (character, location, date, story)
+    let (Some(player), Some(scene), Some(environment), Some(chronicle)) =
+        (player, scene, environment, chronicle)
     else {
         return Ok(false);
     };
 
     // Check if Character is combinable
-    let mismatch = story
-        .character
+    let mismatch = chronicle
+        .player
         .into_iter()
         .enumerate()
         .any(|(i, ingredient)| {
             if let Some(ingredient) = ingredient {
                 match i {
-                    0 => character.adjective != ingredient,
-                    1 => character.name != ingredient,
-                    2 => character.profession != ingredient,
+                    0 => player.adjective != ingredient,
+                    1 => player.name != ingredient,
+                    2 => player.profession != ingredient,
                     _ => unreachable!(),
                 }
             } else {
@@ -132,16 +131,16 @@ pub fn dobs_check_composable(dna_set: [Vec<u8>; 4]) -> Result<bool, Error> {
     }
 
     // Check if Location is combinable
-    let mismatch = story
-        .location
+    let mismatch = chronicle
+        .scene
         .into_iter()
         .enumerate()
         .any(|(i, ingredient)| {
             if let Some(ingredient) = ingredient {
                 match i {
-                    0 => location.adjective != ingredient,
-                    1 => location.name != ingredient,
-                    2 => location.belonging != ingredient,
+                    0 => scene.name != ingredient,
+                    1 => scene.attribute != ingredient,
+                    2 => scene.operation != ingredient,
                     _ => unreachable!(),
                 }
             } else {
@@ -153,18 +152,22 @@ pub fn dobs_check_composable(dna_set: [Vec<u8>; 4]) -> Result<bool, Error> {
     }
 
     // Check if Date is combinable
-    let mismatch = story.date.into_iter().enumerate().any(|(i, ingredient)| {
-        if let Some(ingredient) = ingredient {
-            match i {
-                0 => date.era != ingredient,
-                1 => date.year.to_string() != ingredient,
-                2 => date.time != ingredient,
-                _ => unreachable!(),
+    let mismatch = chronicle
+        .environment
+        .into_iter()
+        .enumerate()
+        .any(|(i, ingredient)| {
+            if let Some(ingredient) = ingredient {
+                match i {
+                    0 => environment.adjective != ingredient,
+                    1 => environment.era != ingredient,
+                    2 => environment.time != ingredient,
+                    _ => unreachable!(),
+                }
+            } else {
+                false
             }
-        } else {
-            false
-        }
-    });
+        });
     if mismatch {
         return Ok(false);
     }

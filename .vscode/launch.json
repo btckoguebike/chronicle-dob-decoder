@@ -7,6 +7,25 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug unit tests in library 'chronicle-decoder'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=chronicle-decoder"
+                ],
+                "filter": {
+                    "name": "chronicle-decoder",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug executable 'chronicle-decoder'",
             "cargo": {
                 "args": [
@@ -36,6 +55,43 @@
                 "filter": {
                     "name": "chronicle-decoder",
                     "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'entry'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=entry",
+                    "--package=chronicle-decoder"
+                ],
+                "filter": {
+                    "name": "entry",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'entry'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=entry",
+                    "--package=chronicle-decoder"
+                ],
+                "filter": {
+                    "name": "entry",
+                    "kind": "example"
                 }
             },
             "args": [],

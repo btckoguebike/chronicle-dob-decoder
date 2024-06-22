@@ -1,5 +1,5 @@
 use alloc::string::{String, ToString};
-use alloc::{format, vec, vec::Vec};
+use alloc::{vec, vec::Vec};
 
 use serde::ser::SerializeMap as _;
 use serde::Serialize;
@@ -65,119 +65,99 @@ macro_rules! parse_multiple {
 }
 
 #[cfg_attr(test, derive(Debug))]
-pub struct Character {
+pub struct Player {
     pub adjective: String,
     pub name: String,
     pub profession: String,
-    pub hp: u8,
     pub power: u8,
-    pub attack: u8,
-    pub defense: u8,
     pub gold: u8,
     pub card: Vec<String>,
 }
 
-impl From<Character> for Vec<ParsedDNA> {
-    fn from(character: Character) -> Self {
+impl From<Player> for Vec<ParsedDNA> {
+    fn from(player: Player) -> Self {
         vec![
-            parse_single!(character, adjective, String),
-            parse_single!(character, name, String),
-            parse_single!(character, profession, String),
-            parse_single!(character, hp, Number),
-            parse_single!(character, power, Number),
-            parse_single!(character, attack, Number),
-            parse_single!(character, defense, Number),
-            parse_single!(character, gold, Number),
-            parse_multiple!(character, card, String),
+            parse_single!(player, adjective, String),
+            parse_single!(player, name, String),
+            parse_single!(player, profession, String),
+            parse_single!(player, power, Number),
+            parse_single!(player, gold, Number),
+            parse_multiple!(player, card, String),
         ]
     }
 }
 
 #[cfg_attr(test, derive(Debug))]
-pub struct Location {
-    pub adjective: String,
+pub struct Scene {
     pub name: String,
-    pub belonging: String,
-    pub coordinate: [u8; 2],
-    pub area: [u8; 2],
-    pub color: [u8; 4],
+    pub attribute: String,
+    pub operation: String,
+    pub score: u8,
+    pub difficulty: u8,
     pub commodity: Vec<String>,
 }
 
-impl From<Location> for Vec<ParsedDNA> {
-    fn from(location: Location) -> Self {
+impl From<Scene> for Vec<ParsedDNA> {
+    fn from(scene: Scene) -> Self {
         vec![
-            parse_single!(location, adjective, String),
-            parse_single!(location, name, String),
-            parse_single!(location, belonging, String),
-            parse_single!(location, coordinate, String, |v: [u8; 2]| format!(
-                "({}, {})",
-                v[0], v[1]
-            )),
-            parse_single!(location, area, String, |v: [u8; 2]| format!(
-                "{} x {}",
-                v[0], v[1]
-            )),
-            parse_single!(location, color, String, |v: [u8; 4]| format!(
-                "#{:02X}{:02X}{:02X}{:02X}",
-                v[0], v[1], v[2], v[3]
-            )),
-            parse_multiple!(location, commodity, String),
+            parse_single!(scene, name, String),
+            parse_single!(scene, attribute, String),
+            parse_single!(scene, operation, String),
+            parse_single!(scene, score, Number),
+            parse_single!(scene, difficulty, Number),
+            parse_multiple!(scene, commodity, String),
         ]
     }
 }
 
 #[cfg_attr(test, derive(Debug))]
-pub struct Date {
+pub struct Environment {
+    pub adjective: String,
     pub era: String,
-    pub year: u8,
     pub time: String,
-    pub weather: String,
-    pub holiday: String,
-    pub season: String,
-    pub background: [u8; 4],
+    pub mode: String,
+    pub rank: u8,
     pub effect: Vec<String>,
 }
 
-impl From<Date> for Vec<ParsedDNA> {
-    fn from(date: Date) -> Self {
+impl From<Environment> for Vec<ParsedDNA> {
+    fn from(environment: Environment) -> Self {
         vec![
-            parse_single!(date, era, String),
-            parse_single!(date, year, Number),
-            parse_single!(date, time, String),
-            parse_single!(date, weather, String),
-            parse_single!(date, holiday, String),
-            parse_single!(date, season, String),
-            parse_single!(date, background, String, |v: [u8; 4]| format!(
-                "#{:02X}{:02X}{:02X}{:02X}",
-                v[0], v[1], v[2], v[3]
-            )),
-            parse_multiple!(date, effect, String),
+            parse_single!(environment, adjective, String),
+            parse_single!(environment, era, String),
+            parse_single!(environment, time, String),
+            parse_single!(environment, mode, String),
+            parse_single!(environment, rank, Number),
+            parse_multiple!(environment, effect, String),
         ]
     }
 }
 
 #[cfg_attr(test, derive(Debug))]
-pub struct Story {
-    pub character: [Option<String>; 3],
-    pub location: [Option<String>; 3],
-    pub date: [Option<String>; 3],
-    pub event: [String; 4],
+pub struct Chronicle {
+    pub player: [Option<String>; 3],
+    pub scene: [Option<String>; 3],
+    pub environment: [Option<String>; 3],
+    pub transition: String,
+    pub climax: String,
+    pub ending: String,
 }
 
-impl From<Story> for Vec<ParsedDNA> {
-    fn from(value: Story) -> Self {
+impl From<Chronicle> for Vec<ParsedDNA> {
+    fn from(value: Chronicle) -> Self {
         vec![
-            parse_single!(value, character, String, |v: [Option<String>; 3]| v
+            parse_single!(value, player, String, |v: [Option<String>; 3]| v
                 .map(|value| value.unwrap_or("_".to_string()))
                 .join("|")),
-            parse_single!(value, location, String, |v: [Option<String>; 3]| v
+            parse_single!(value, scene, String, |v: [Option<String>; 3]| v
                 .map(|value| value.unwrap_or("_".to_string()))
                 .join("|")),
-            parse_single!(value, date, String, |v: [Option<String>; 3]| v
+            parse_single!(value, environment, String, |v: [Option<String>; 3]| v
                 .map(|value| value.unwrap_or("_".to_string()))
                 .join("|")),
-            parse_multiple!(value, event, String),
+            parse_single!(value, transition, String),
+            parse_single!(value, climax, String),
+            parse_single!(value, ending, String),
         ]
     }
 }

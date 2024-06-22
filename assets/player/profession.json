@@ -1,10 +1,10 @@
 {
-    "pattern_bytes": 1,
     "segment": {
         "bytes": 1,
         "trait_pool": [
             "战士",
             "刺客",
+            "猎手",
             "法师",
             "牧师"
         ]

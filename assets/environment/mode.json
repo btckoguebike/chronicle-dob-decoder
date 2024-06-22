@@ -1,0 +1,10 @@
+{
+    "segment": {
+        "bytes": 1,
+        "trait_pool": [
+            "PVE",
+            "PVP",
+            "UGC"
+        ]
+    }
+}

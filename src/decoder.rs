@@ -5,19 +5,28 @@ use alloc::{
     vec::{IntoIter, Vec},
 };
 use chronicle_schema::{
-    CharacterSchema, DateSchema, Instruction, InstructionUnion, LocationSchema, PatternUnion,
-    PoolUnion, Schema, Segment, StorySchema, VariableSegment,
+    ChronicleSchema, EnvironmentSchema, Instruction, InstructionUnion, Pattern, PatternUnion,
+    PlayerSchema, PoolUnion, SceneSchema, Segment, VariableSegment,
 };
 use serde_json::Value;
 
 use crate::{
     error::Error,
-    object::{Character, Date, Location, Story},
+    object::{Chronicle, Environment, Player, Scene},
 };
 
 struct PoolSelector<T: Clone> {
     array: Vec<T>,
     bytes: Vec<u8>,
+}
+
+macro_rules! check_splice {
+    ($vec:ident, $occupied:expr) => {{
+        if $vec.len() < $occupied {
+            return Err(Error::DecodeInsufficientDNA);
+        }
+        $vec.splice(0..$occupied, vec![]).collect::<Vec<_>>()
+    }};
 }
 
 impl<T: Clone> PoolSelector<T> {
@@ -48,7 +57,7 @@ impl<T: Clone> PoolSelector<T> {
 
 fn decode_segment(segment: Segment, dna_bytes: &mut Vec<u8>) -> Result<Value, Error> {
     let occupied = u8::from(segment.segment_bytes()) as usize;
-    let occupied_bytes = dna_bytes.splice(0..occupied, vec![]).collect::<Vec<_>>();
+    let occupied_bytes = check_splice!(dna_bytes, occupied);
     let result = match segment.pool().to_enum() {
         PoolUnion::TraitPool(value) => {
             let value = value
@@ -94,18 +103,19 @@ fn decode_template_instructions(
     let mut pending_values = vec![];
     for instruction in instructions {
         match instruction.to_enum() {
-            InstructionUnion::NumberPool(value) => {
-                let value = value.into_iter().map(u8::from).collect();
-                let value =
-                    PoolSelector::new(value, dna_bytes.splice(0..1, vec![]).collect())?.select()?;
-                pending_values.push(value);
-            }
             InstructionUnion::NumberRange(value) => {
                 let min: u8 = value.min().into();
                 let max: u8 = value.max().into();
                 let value =
-                    PoolSelector::new_range(min..=max, dna_bytes.splice(0..1, vec![]).collect())?
-                        .select()?;
+                    PoolSelector::new_range(min..=max, check_splice!(dna_bytes, 1))?.select()?;
+                pending_values.push(value.to_string());
+            }
+            InstructionUnion::TraitPool(value) => {
+                let value = value
+                    .into_iter()
+                    .map(|v| String::from_utf8_lossy(&v.raw_data()).to_string())
+                    .collect();
+                let value = PoolSelector::new(value, check_splice!(dna_bytes, 1))?.select()?;
                 pending_values.push(value);
             }
             InstructionUnion::UTF8Bytes(template) => {
@@ -147,7 +157,7 @@ fn decode_variable_segment(
     dna_bytes: &mut Vec<u8>,
 ) -> Result<Vec<Value>, Error> {
     let occupied = u8::from(variable.count().segment_bytes()) as usize;
-    let occupied_bytes = dna_bytes.splice(0..occupied, vec![]).collect::<Vec<_>>();
+    let occupied_bytes = check_splice!(dna_bytes, occupied);
     let count = match variable.count().pool().to_enum() {
         PoolUnion::NumberPool(value) => {
             let value = value.into_iter().map(u8::from).collect();
@@ -163,31 +173,22 @@ fn decode_variable_segment(
     if count as usize > variable.segments().len() {
         return Err(Error::DecodePatternCountError);
     }
-    (0..count)
-        .map(|_| {
-            let segment = variable.segments().into_iter().next().unwrap();
-            decode_segment(segment, dna_bytes)
-        })
+    variable
+        .segments()
+        .into_iter()
+        .take(count as usize)
+        .map(|segment| decode_segment(segment, dna_bytes))
         .collect::<Result<Vec<_>, _>>()
 }
 
-fn decode_schema(schema: Schema, dna_bytes: &mut Vec<u8>) -> Result<Value, Error> {
-    let occupied = u8::from(schema.occupied_bytes()) as usize;
-    let mut occupied_bytes = dna_bytes.splice(0..occupied, vec![]).collect::<Vec<_>>();
-    match schema.pattern().to_enum() {
+fn decode_pattern(pattern: Pattern, dna_bytes: &mut Vec<u8>) -> Result<Value, Error> {
+    match pattern.to_enum() {
         PatternUnion::Segment(segment) => {
-            let value = decode_segment(segment, &mut occupied_bytes)?;
+            let value = decode_segment(segment, dna_bytes)?;
             Ok(value)
         }
-        PatternUnion::SegmentVec(segments) => {
-            let value = segments
-                .into_iter()
-                .map(|pattern| decode_segment(pattern, &mut occupied_bytes))
-                .collect::<Result<Vec<_>, _>>()?;
-            Ok(Value::Array(value))
-        }
         PatternUnion::VariableSegment(variable) => {
-            let value = decode_variable_segment(variable, &mut occupied_bytes)?
+            let value = decode_variable_segment(variable, dna_bytes)?
                 .into_iter()
                 .collect::<Vec<_>>();
             Ok(Value::Array(value))
@@ -196,7 +197,7 @@ fn decode_schema(schema: Schema, dna_bytes: &mut Vec<u8>) -> Result<Value, Error
             let value = variables
                 .into_iter()
                 .map(|variable| {
-                    decode_variable_segment(variable, &mut occupied_bytes)
+                    decode_variable_segment(variable, dna_bytes)
                         .map(|values| Value::Array(values.into_iter().collect::<Vec<_>>()))
                 })
                 .collect::<Result<Vec<_>, _>>()?;
@@ -214,19 +215,6 @@ macro_rules! parse_string {
 macro_rules! parse_number {
     ($field:ident, $error:ident) => {
         $field.as_u64().ok_or(Error::$error)? as u8
-    };
-}
-
-macro_rules! parse_number_array {
-    ($field:ident, $error:ident) => {
-        $field
-            .as_array()
-            .ok_or(Error::$error)?
-            .into_iter()
-            .map(|value| Ok(parse_number!(value, $error)))
-            .collect::<Result<Vec<_>, Error>>()?
-            .try_into()
-            .map_err(|_| Error::$error)?
     };
 }
 
@@ -249,105 +237,96 @@ macro_rules! parse_string_array {
     };
 }
 
-pub fn decode_character(
-    character: CharacterSchema,
+pub fn decode_player(player: PlayerSchema, mut dna_bytes: Vec<u8>) -> Result<Player, Error> {
+    let adjective = decode_pattern(player.adjective(), &mut dna_bytes)?;
+    let name = decode_pattern(player.name(), &mut dna_bytes)?;
+    let profession = decode_pattern(player.profession(), &mut dna_bytes)?;
+    let power = decode_pattern(player.power(), &mut dna_bytes)?;
+    let gold = decode_pattern(player.gold(), &mut dna_bytes)?;
+    let card = decode_pattern(player.card(), &mut dna_bytes)?;
+
+    Ok(Player {
+        adjective: parse_string!(adjective, ParsePlayerAdjectiveError),
+        name: parse_string!(name, ParsePlayerNameError),
+        profession: parse_string!(profession, ParsePlayerProfessionError),
+        power: parse_number!(power, ParsePlayerPowerError),
+        gold: parse_number!(gold, ParsePlayerGoldError),
+        card: parse_string_array!(card, ParsePlayerCardError),
+    })
+}
+
+pub fn decode_scene(scene: SceneSchema, mut dna_bytes: Vec<u8>) -> Result<Scene, Error> {
+    let name = decode_pattern(scene.name(), &mut dna_bytes)?;
+    let attribute = decode_pattern(scene.attribute(), &mut dna_bytes)?;
+    let operation = decode_pattern(scene.operation(), &mut dna_bytes)?;
+    let score = decode_pattern(scene.score(), &mut dna_bytes)?;
+    let difficulty = decode_pattern(scene.difficulty(), &mut dna_bytes)?;
+    let commodity = decode_pattern(scene.commodity(), &mut dna_bytes)?;
+
+    Ok(Scene {
+        name: parse_string!(name, ParseSceneNameError),
+        attribute: parse_string!(attribute, ParseSceneAttributeError),
+        operation: parse_string!(operation, ParseSceneOperationError),
+        score: parse_number!(score, ParseSceneScoreError),
+        difficulty: parse_number!(difficulty, ParseSceneDifficultyError),
+        commodity: parse_string_array!(commodity, ParseSceneCommodityError),
+    })
+}
+
+pub fn decode_environment(
+    environment: EnvironmentSchema,
     mut dna_bytes: Vec<u8>,
-) -> Result<Character, Error> {
-    let adjective = decode_schema(character.adjective(), &mut dna_bytes)?;
-    let name = decode_schema(character.name(), &mut dna_bytes)?;
-    let profession = decode_schema(character.profession(), &mut dna_bytes)?;
-    let hp = decode_schema(character.hp(), &mut dna_bytes)?;
-    let power = decode_schema(character.power(), &mut dna_bytes)?;
-    let attack = decode_schema(character.attack(), &mut dna_bytes)?;
-    let defense = decode_schema(character.defense(), &mut dna_bytes)?;
-    let gold = decode_schema(character.gold(), &mut dna_bytes)?;
-    let card = decode_schema(character.card(), &mut dna_bytes)?;
+) -> Result<Environment, Error> {
+    let adjective = decode_pattern(environment.adjective(), &mut dna_bytes)?;
+    let era = decode_pattern(environment.era(), &mut dna_bytes)?;
+    let time = decode_pattern(environment.time(), &mut dna_bytes)?;
+    let mode = decode_pattern(environment.mode(), &mut dna_bytes)?;
+    let rank = decode_pattern(environment.rank(), &mut dna_bytes)?;
+    let effect = decode_pattern(environment.effect(), &mut dna_bytes)?;
 
-    Ok(Character {
-        adjective: parse_string!(adjective, ParseCharacterAdjectiveError),
-        name: parse_string!(name, ParseCharacterNameError),
-        profession: parse_string!(profession, ParseCharacterProfessionError),
-        hp: parse_number!(hp, ParseCharacterHpError),
-        power: parse_number!(power, ParseCharacterPowerError),
-        attack: parse_number!(attack, ParseCharacterAttackError),
-        defense: parse_number!(defense, ParseCharacterDefenseError),
-        gold: parse_number!(gold, ParseCharacterGoldError),
-        card: parse_string_array!(card, ParseCharacterCardError),
+    Ok(Environment {
+        adjective: parse_string!(adjective, ParseEnvironmentAjectiveError),
+        era: parse_string!(era, ParseEnvironmentEraError),
+        time: parse_string!(time, ParseEnvironmentTimeError),
+        mode: parse_string!(mode, ParseEnvironmentModeError),
+        rank: parse_number!(rank, ParseEnvironmentRankError),
+        effect: parse_string_array!(effect, ParseEnvironmentEffectError),
     })
 }
 
-pub fn decode_location(
-    location: LocationSchema,
+pub fn decode_chronicle(
+    chronicle: ChronicleSchema,
     mut dna_bytes: Vec<u8>,
-) -> Result<Location, Error> {
-    let adjective = decode_schema(location.adjective(), &mut dna_bytes)?;
-    let name = decode_schema(location.name(), &mut dna_bytes)?;
-    let belonging = decode_schema(location.belonging(), &mut dna_bytes)?;
-    let coordinate = decode_schema(location.coordinate(), &mut dna_bytes)?;
-    let area = decode_schema(location.area(), &mut dna_bytes)?;
-    let color = decode_schema(location.color(), &mut dna_bytes)?;
-    let commodity = decode_schema(location.commodity(), &mut dna_bytes)?;
-
-    Ok(Location {
-        adjective: parse_string!(adjective, ParseLocationAdjectiveError),
-        name: parse_string!(name, ParseLocationNameError),
-        belonging: parse_string!(belonging, ParseLocationBelongingError),
-        coordinate: parse_number_array!(coordinate, ParseLocationCoordinateError),
-        area: parse_number_array!(area, ParseLocationAreaError),
-        color: parse_number_array!(color, ParseLocationColorError),
-        commodity: parse_string_array!(commodity, ParseLocationCommodityError),
-    })
-}
-
-pub fn decode_date(date: DateSchema, mut dna_bytes: Vec<u8>) -> Result<Date, Error> {
-    let era = decode_schema(date.era(), &mut dna_bytes)?;
-    let year = decode_schema(date.year(), &mut dna_bytes)?;
-    let time = decode_schema(date.time(), &mut dna_bytes)?;
-    let weather = decode_schema(date.weather(), &mut dna_bytes)?;
-    let holiday = decode_schema(date.holiday(), &mut dna_bytes)?;
-    let season = decode_schema(date.season(), &mut dna_bytes)?;
-    let background = decode_schema(date.background(), &mut dna_bytes)?;
-    let effect = decode_schema(date.effect(), &mut dna_bytes)?;
-
-    Ok(Date {
-        era: parse_string!(era, ParseDateEraError),
-        year: parse_number!(year, ParseDateYearError),
-        time: parse_string!(time, ParseDateTimeError),
-        weather: parse_string!(weather, ParseDateWeatherError),
-        holiday: parse_string!(holiday, ParseDateHolidayError),
-        season: parse_string!(season, ParseDateSeasonError),
-        background: parse_number_array!(background, ParseDateBackgroundError),
-        effect: parse_string_array!(effect, ParseDateEffectError),
-    })
-}
-
-pub fn decode_story(story: StorySchema, mut dna_bytes: Vec<u8>) -> Result<Story, Error> {
-    let character = decode_schema(story.character(), &mut dna_bytes)?;
-    let location = decode_schema(story.location(), &mut dna_bytes)?;
-    let date = decode_schema(story.date(), &mut dna_bytes)?;
-    let event = decode_schema(story.event(), &mut dna_bytes)?;
+) -> Result<Chronicle, Error> {
+    let player = decode_pattern(chronicle.player(), &mut dna_bytes)?;
+    let scene = decode_pattern(chronicle.scene(), &mut dna_bytes)?;
+    let environment = decode_pattern(chronicle.environment(), &mut dna_bytes)?;
+    let transition = decode_pattern(chronicle.transition(), &mut dna_bytes)?;
+    let climax = decode_pattern(chronicle.climax(), &mut dna_bytes)?;
+    let ending = decode_pattern(chronicle.ending(), &mut dna_bytes)?;
 
     let handle = |value: &Value, error: Error| {
         let value = value.as_array().ok_or(error.clone())?;
-        if let Some(value) = value.first() {
-            Ok(Some(value.as_str().ok_or(error)?.to_string()))
-        } else {
-            Ok(None)
+        match value.first() {
+            Some(Value::String(value)) => Ok(Some(value.clone())),
+            Some(Value::Number(value)) => Ok(Some(value.to_string())),
+            None => Ok(None),
+            _ => Err(error),
         }
     };
 
-    Ok(Story {
-        character: parse_string_array!(character, ParseStoryCharacterError, handle)
+    Ok(Chronicle {
+        player: parse_string_array!(player, ParseChroniclePlayerError, handle)
             .try_into()
-            .map_err(|_| Error::ParseStoryCharacterError)?,
-        location: parse_string_array!(location, ParseStoryLocationError, handle)
+            .map_err(|_| Error::ParseChroniclePlayerError)?,
+        scene: parse_string_array!(scene, ParseChronicleSceneError, handle)
             .try_into()
-            .map_err(|_| Error::ParseStoryLocationError)?,
-        date: parse_string_array!(date, ParseStoryDateError, handle)
+            .map_err(|_| Error::ParseChronicleSceneError)?,
+        environment: parse_string_array!(environment, ParseChronicleEnvironomentError, handle)
             .try_into()
-            .map_err(|_| Error::ParseStoryDateError)?,
-        event: parse_string_array!(event, ParseStoryEventError)
-            .try_into()
-            .map_err(|_| Error::ParseStoryEventError)?,
+            .map_err(|_| Error::ParseChronicleEnvironomentError)?,
+        transition: parse_string!(transition, ParseChronicleTransitionError),
+        climax: parse_string!(climax, ParseChronicleClimaxError),
+        ending: parse_string!(ending, ParseChronicleEndingError),
     })
 }

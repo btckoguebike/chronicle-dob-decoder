@@ -19,10 +19,8 @@ struct VariableSegment {
 }
 
 #[derive(serde::Deserialize)]
-struct Schema {
-    pattern_bytes: u8,
+struct Pattern {
     segment: Option<Segment>,
-    segment_vec: Option<Vec<Segment>>,
     variable_segment: Option<VariableSegment>,
     variable_segment_vec: Option<Vec<VariableSegment>>,
     #[serde(flatten)]
@@ -59,20 +57,6 @@ fn parse_segment(value: &Segment, additional_fields: &HashMap<String, Value>) ->
     builder.build()
 }
 
-fn parse_segment_vec(
-    value: &[Segment],
-    additional_fields: &HashMap<String, Value>,
-) -> gen::SegmentVec {
-    gen::SegmentVec::new_builder()
-        .set(
-            value
-                .iter()
-                .map(|segment| parse_segment(segment, additional_fields))
-                .collect::<Vec<_>>(),
-        )
-        .build()
-}
-
 fn parse_variable_segment(
     value: &VariableSegment,
     additional_fields: &HashMap<String, Value>,
@@ -103,14 +87,10 @@ fn parse_variable_segment_vec(
         .build()
 }
 
-fn parse_schema(value: &Schema) -> gen::Schema {
-    let pattern = if let Some(segment) = &value.segment {
+fn parse_pattern(value: &Pattern) -> gen::Pattern {
+    if let Some(segment) = &value.segment {
         gen::Pattern::new_builder()
             .set(parse_segment(segment, &value.additional_fields))
-            .build()
-    } else if let Some(segment_vec) = &value.segment_vec {
-        gen::Pattern::new_builder()
-            .set(parse_segment_vec(segment_vec, &value.additional_fields))
             .build()
     } else if let Some(variable_segment) = &value.variable_segment {
         gen::Pattern::new_builder()
@@ -128,11 +108,7 @@ fn parse_schema(value: &Schema) -> gen::Schema {
             .build()
     } else {
         panic!("invalid schema");
-    };
-    gen::Schema::new_builder()
-        .occupied_bytes(value.pattern_bytes.into())
-        .pattern(pattern)
-        .build()
+    }
 }
 
 macro_rules! parse_schema_object {
@@ -142,15 +118,15 @@ macro_rules! parse_schema_object {
         ]
         .into_iter()
         .map(|field| {
-            let schema_json = fs::read_to_string(format!("./assets/{}/{field}.json", stringify!($object)))
+            let pattern_json = fs::read_to_string(format!("./assets/{}/{field}.json", stringify!($object)))
                 .expect(&format!("read {field}.json"));
-            let schema: Schema = serde_json::from_str(&schema_json).expect(&format!("parse {field}.json"));
-            (field, schema)
+            let pattern: Pattern = serde_json::from_str(&pattern_json).expect(&format!("parse {field}.json"));
+            (field, pattern)
         })
         .collect::<HashMap<_, _>>();
         gen::$target::new_builder()
             $(
-                .$field(parse_schema(&object[stringify!($field)]))
+                .$field(parse_pattern(&object[stringify!($field)]))
             )+
             .build()
     }};
@@ -158,35 +134,39 @@ macro_rules! parse_schema_object {
 
 pub fn main() {
     // generate `character` schema
-    let character = parse_schema_object!(
-        CharacterSchema,
-        character,
-        (adjective, name, profession, hp, power, attack, defense, gold, card)
+    let player = parse_schema_object!(
+        PlayerSchema,
+        player,
+        (adjective, name, profession, power, gold, card)
     );
 
     // gnerate `date` module
-    let date = parse_schema_object!(
-        DateSchema,
-        date,
-        (era, year, time, weather, holiday, season, background, effect)
+    let environment = parse_schema_object!(
+        EnvironmentSchema,
+        environment,
+        (adjective, era, time, mode, rank, effect)
     );
 
     // gnerate `location` module
-    let location = parse_schema_object!(
-        LocationSchema,
-        location,
-        (adjective, name, belonging, coordinate, area, color, commodity)
+    let scene = parse_schema_object!(
+        SceneSchema,
+        scene,
+        (name, attribute, operation, difficulty, score, commodity)
     );
 
     // gnerate `story` module
-    let story = parse_schema_object!(StorySchema, story, (character, location, date, event));
+    let chronicle = parse_schema_object!(
+        ChronicleSchema,
+        chronicle,
+        (player, scene, environment, transition, climax, ending)
+    );
 
     // generate `generated.rs`
     let mol_chronicle = gen::AshWarChronicle::new_builder()
-        .character_schema(character)
-        .date_schema(date)
-        .location_schema(location)
-        .story_schema(story)
+        .player(player)
+        .envionment(environment)
+        .scene(scene)
+        .chronicle(chronicle)
         .build();
     let mol_bytes = mol_chronicle.as_slice();
     let file_content = format!(

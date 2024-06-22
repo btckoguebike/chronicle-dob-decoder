@@ -1,12 +1,11 @@
 {
-    "pattern_bytes": 1,
     "segment": {
         "bytes": 1,
         "trait_pool": [
             "营地",
             "驿站",
             "据点",
-            "王国",
+            "禁地",
             "商店"
         ]
     }

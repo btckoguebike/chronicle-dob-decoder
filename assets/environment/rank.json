@@ -1,10 +1,9 @@
 {
-    "pattern_bytes": 1,
     "segment": {
         "bytes": 1,
         "number_range": [
-            50,
-            100
+            1,
+            255
         ]
     }
 }

@@ -1154,7 +1154,7 @@ impl Instruction {
         let inner = self.0.slice(molecule::NUMBER_SIZE..);
         match self.item_id() {
             0 => NumberRange::new_unchecked(inner).into(),
-            1 => NumberPool::new_unchecked(inner).into(),
+            1 => TraitPool::new_unchecked(inner).into(),
             2 => UTF8Bytes::new_unchecked(inner).into(),
             _ => panic!("{}: invalid data", Self::NAME),
         }
@@ -1220,7 +1220,7 @@ impl<'r> InstructionReader<'r> {
         let inner = &self.as_slice()[molecule::NUMBER_SIZE..];
         match self.item_id() {
             0 => NumberRangeReader::new_unchecked(inner).into(),
-            1 => NumberPoolReader::new_unchecked(inner).into(),
+            1 => TraitPoolReader::new_unchecked(inner).into(),
             2 => UTF8BytesReader::new_unchecked(inner).into(),
             _ => panic!("{}: invalid data", Self::NAME),
         }
@@ -1248,7 +1248,7 @@ impl<'r> molecule::prelude::Reader<'r> for InstructionReader<'r> {
         let inner_slice = &slice[molecule::NUMBER_SIZE..];
         match item_id {
             0 => NumberRangeReader::verify(inner_slice, compatible),
-            1 => NumberPoolReader::verify(inner_slice, compatible),
+            1 => TraitPoolReader::verify(inner_slice, compatible),
             2 => UTF8BytesReader::verify(inner_slice, compatible),
             _ => ve!(Self, UnknownItem, Self::ITEMS_COUNT, item_id),
         }?;
@@ -1287,13 +1287,13 @@ impl molecule::prelude::Builder for InstructionBuilder {
 #[derive(Debug, Clone)]
 pub enum InstructionUnion {
     NumberRange(NumberRange),
-    NumberPool(NumberPool),
+    TraitPool(TraitPool),
     UTF8Bytes(UTF8Bytes),
 }
 #[derive(Debug, Clone, Copy)]
 pub enum InstructionUnionReader<'r> {
     NumberRange(NumberRangeReader<'r>),
-    NumberPool(NumberPoolReader<'r>),
+    TraitPool(TraitPoolReader<'r>),
     UTF8Bytes(UTF8BytesReader<'r>),
 }
 impl ::core::default::Default for InstructionUnion {
@@ -1307,8 +1307,8 @@ impl ::core::fmt::Display for InstructionUnion {
             InstructionUnion::NumberRange(ref item) => {
                 write!(f, "{}::{}({})", Self::NAME, NumberRange::NAME, item)
             }
-            InstructionUnion::NumberPool(ref item) => {
-                write!(f, "{}::{}({})", Self::NAME, NumberPool::NAME, item)
+            InstructionUnion::TraitPool(ref item) => {
+                write!(f, "{}::{}({})", Self::NAME, TraitPool::NAME, item)
             }
             InstructionUnion::UTF8Bytes(ref item) => {
                 write!(f, "{}::{}({})", Self::NAME, UTF8Bytes::NAME, item)
@@ -1322,8 +1322,8 @@ impl<'r> ::core::fmt::Display for InstructionUnionReader<'r> {
             InstructionUnionReader::NumberRange(ref item) => {
                 write!(f, "{}::{}({})", Self::NAME, NumberRange::NAME, item)
             }
-            InstructionUnionReader::NumberPool(ref item) => {
-                write!(f, "{}::{}({})", Self::NAME, NumberPool::NAME, item)
+            InstructionUnionReader::TraitPool(ref item) => {
+                write!(f, "{}::{}({})", Self::NAME, TraitPool::NAME, item)
             }
             InstructionUnionReader::UTF8Bytes(ref item) => {
                 write!(f, "{}::{}({})", Self::NAME, UTF8Bytes::NAME, item)
@@ -1335,7 +1335,7 @@ impl InstructionUnion {
     pub(crate) fn display_inner(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         match self {
             InstructionUnion::NumberRange(ref item) => write!(f, "{}", item),
-            InstructionUnion::NumberPool(ref item) => write!(f, "{}", item),
+            InstructionUnion::TraitPool(ref item) => write!(f, "{}", item),
             InstructionUnion::UTF8Bytes(ref item) => write!(f, "{}", item),
         }
     }
@@ -1344,7 +1344,7 @@ impl<'r> InstructionUnionReader<'r> {
     pub(crate) fn display_inner(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         match self {
             InstructionUnionReader::NumberRange(ref item) => write!(f, "{}", item),
-            InstructionUnionReader::NumberPool(ref item) => write!(f, "{}", item),
+            InstructionUnionReader::TraitPool(ref item) => write!(f, "{}", item),
             InstructionUnionReader::UTF8Bytes(ref item) => write!(f, "{}", item),
         }
     }
@@ -1354,9 +1354,9 @@ impl ::core::convert::From<NumberRange> for InstructionUnion {
         InstructionUnion::NumberRange(item)
     }
 }
-impl ::core::convert::From<NumberPool> for InstructionUnion {
-    fn from(item: NumberPool) -> Self {
-        InstructionUnion::NumberPool(item)
+impl ::core::convert::From<TraitPool> for InstructionUnion {
+    fn from(item: TraitPool) -> Self {
+        InstructionUnion::TraitPool(item)
     }
 }
 impl ::core::convert::From<UTF8Bytes> for InstructionUnion {
@@ -1369,9 +1369,9 @@ impl<'r> ::core::convert::From<NumberRangeReader<'r>> for InstructionUnionReader
         InstructionUnionReader::NumberRange(item)
     }
 }
-impl<'r> ::core::convert::From<NumberPoolReader<'r>> for InstructionUnionReader<'r> {
-    fn from(item: NumberPoolReader<'r>) -> Self {
-        InstructionUnionReader::NumberPool(item)
+impl<'r> ::core::convert::From<TraitPoolReader<'r>> for InstructionUnionReader<'r> {
+    fn from(item: TraitPoolReader<'r>) -> Self {
+        InstructionUnionReader::TraitPool(item)
     }
 }
 impl<'r> ::core::convert::From<UTF8BytesReader<'r>> for InstructionUnionReader<'r> {
@@ -1384,35 +1384,35 @@ impl InstructionUnion {
     pub fn as_bytes(&self) -> molecule::bytes::Bytes {
         match self {
             InstructionUnion::NumberRange(item) => item.as_bytes(),
-            InstructionUnion::NumberPool(item) => item.as_bytes(),
+            InstructionUnion::TraitPool(item) => item.as_bytes(),
             InstructionUnion::UTF8Bytes(item) => item.as_bytes(),
         }
     }
     pub fn as_slice(&self) -> &[u8] {
         match self {
             InstructionUnion::NumberRange(item) => item.as_slice(),
-            InstructionUnion::NumberPool(item) => item.as_slice(),
+            InstructionUnion::TraitPool(item) => item.as_slice(),
             InstructionUnion::UTF8Bytes(item) => item.as_slice(),
         }
     }
     pub fn item_id(&self) -> molecule::Number {
         match self {
             InstructionUnion::NumberRange(_) => 0,
-            InstructionUnion::NumberPool(_) => 1,
+            InstructionUnion::TraitPool(_) => 1,
             InstructionUnion::UTF8Bytes(_) => 2,
         }
     }
     pub fn item_name(&self) -> &str {
         match self {
             InstructionUnion::NumberRange(_) => "NumberRange",
-            InstructionUnion::NumberPool(_) => "NumberPool",
+            InstructionUnion::TraitPool(_) => "TraitPool",
             InstructionUnion::UTF8Bytes(_) => "UTF8Bytes",
         }
     }
     pub fn as_reader<'r>(&'r self) -> InstructionUnionReader<'r> {
         match self {
             InstructionUnion::NumberRange(item) => item.as_reader().into(),
-            InstructionUnion::NumberPool(item) => item.as_reader().into(),
+            InstructionUnion::TraitPool(item) => item.as_reader().into(),
             InstructionUnion::UTF8Bytes(item) => item.as_reader().into(),
         }
     }
@@ -1422,21 +1422,21 @@ impl<'r> InstructionUnionReader<'r> {
     pub fn as_slice(&self) -> &'r [u8] {
         match self {
             InstructionUnionReader::NumberRange(item) => item.as_slice(),
-            InstructionUnionReader::NumberPool(item) => item.as_slice(),
+            InstructionUnionReader::TraitPool(item) => item.as_slice(),
             InstructionUnionReader::UTF8Bytes(item) => item.as_slice(),
         }
     }
     pub fn item_id(&self) -> molecule::Number {
         match self {
             InstructionUnionReader::NumberRange(_) => 0,
-            InstructionUnionReader::NumberPool(_) => 1,
+            InstructionUnionReader::TraitPool(_) => 1,
             InstructionUnionReader::UTF8Bytes(_) => 2,
         }
     }
     pub fn item_name(&self) -> &str {
         match self {
             InstructionUnionReader::NumberRange(_) => "NumberRange",
-            InstructionUnionReader::NumberPool(_) => "NumberPool",
+            InstructionUnionReader::TraitPool(_) => "TraitPool",
             InstructionUnionReader::UTF8Bytes(_) => "UTF8Bytes",
         }
     }
@@ -1446,8 +1446,8 @@ impl From<NumberRange> for Instruction {
         Self::new_builder().set(value).build()
     }
 }
-impl From<NumberPool> for Instruction {
-    fn from(value: NumberPool) -> Self {
+impl From<TraitPool> for Instruction {
+    fn from(value: TraitPool) -> Self {
         Self::new_builder().set(value).build()
     }
 }
@@ -3774,7 +3774,7 @@ impl Pattern {
     const DEFAULT_VALUE: [u8; 25] = [
         0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
     ];
-    pub const ITEMS_COUNT: usize = 4;
+    pub const ITEMS_COUNT: usize = 3;
     pub fn item_id(&self) -> molecule::Number {
         molecule::unpack_number(self.as_slice())
     }
@@ -3782,9 +3782,8 @@ impl Pattern {
         let inner = self.0.slice(molecule::NUMBER_SIZE..);
         match self.item_id() {
             0 => Segment::new_unchecked(inner).into(),
-            1 => SegmentVec::new_unchecked(inner).into(),
-            2 => VariableSegment::new_unchecked(inner).into(),
-            3 => VariableSegmentVec::new_unchecked(inner).into(),
+            1 => VariableSegment::new_unchecked(inner).into(),
+            2 => VariableSegmentVec::new_unchecked(inner).into(),
             _ => panic!("{}: invalid data", Self::NAME),
         }
     }
@@ -3841,7 +3840,7 @@ impl<'r> ::core::fmt::Display for PatternReader<'r> {
     }
 }
 impl<'r> PatternReader<'r> {
-    pub const ITEMS_COUNT: usize = 4;
+    pub const ITEMS_COUNT: usize = 3;
     pub fn item_id(&self) -> molecule::Number {
         molecule::unpack_number(self.as_slice())
     }
@@ -3849,9 +3848,8 @@ impl<'r> PatternReader<'r> {
         let inner = &self.as_slice()[molecule::NUMBER_SIZE..];
         match self.item_id() {
             0 => SegmentReader::new_unchecked(inner).into(),
-            1 => SegmentVecReader::new_unchecked(inner).into(),
-            2 => VariableSegmentReader::new_unchecked(inner).into(),
-            3 => VariableSegmentVecReader::new_unchecked(inner).into(),
+            1 => VariableSegmentReader::new_unchecked(inner).into(),
+            2 => VariableSegmentVecReader::new_unchecked(inner).into(),
             _ => panic!("{}: invalid data", Self::NAME),
         }
     }
@@ -3878,9 +3876,8 @@ impl<'r> molecule::prelude::Reader<'r> for PatternReader<'r> {
         let inner_slice = &slice[molecule::NUMBER_SIZE..];
         match item_id {
             0 => SegmentReader::verify(inner_slice, compatible),
-            1 => SegmentVecReader::verify(inner_slice, compatible),
-            2 => VariableSegmentReader::verify(inner_slice, compatible),
-            3 => VariableSegmentVecReader::verify(inner_slice, compatible),
+            1 => VariableSegmentReader::verify(inner_slice, compatible),
+            2 => VariableSegmentVecReader::verify(inner_slice, compatible),
             _ => ve!(Self, UnknownItem, Self::ITEMS_COUNT, item_id),
         }?;
         Ok(())
@@ -3889,7 +3886,7 @@ impl<'r> molecule::prelude::Reader<'r> for PatternReader<'r> {
 #[derive(Clone, Debug, Default)]
 pub struct PatternBuilder(pub(crate) PatternUnion);
 impl PatternBuilder {
-    pub const ITEMS_COUNT: usize = 4;
+    pub const ITEMS_COUNT: usize = 3;
     pub fn set<I>(mut self, v: I) -> Self
     where
         I: ::core::convert::Into<PatternUnion>,
@@ -3918,14 +3915,12 @@ impl molecule::prelude::Builder for PatternBuilder {
 #[derive(Debug, Clone)]
 pub enum PatternUnion {
     Segment(Segment),
-    SegmentVec(SegmentVec),
     VariableSegment(VariableSegment),
     VariableSegmentVec(VariableSegmentVec),
 }
 #[derive(Debug, Clone, Copy)]
 pub enum PatternUnionReader<'r> {
     Segment(SegmentReader<'r>),
-    SegmentVec(SegmentVecReader<'r>),
     VariableSegment(VariableSegmentReader<'r>),
     VariableSegmentVec(VariableSegmentVecReader<'r>),
 }
@@ -3939,9 +3934,6 @@ impl ::core::fmt::Display for PatternUnion {
         match self {
             PatternUnion::Segment(ref item) => {
                 write!(f, "{}::{}({})", Self::NAME, Segment::NAME, item)
-            }
-            PatternUnion::SegmentVec(ref item) => {
-                write!(f, "{}::{}({})", Self::NAME, SegmentVec::NAME, item)
             }
             PatternUnion::VariableSegment(ref item) => {
                 write!(f, "{}::{}({})", Self::NAME, VariableSegment::NAME, item)
@@ -3958,9 +3950,6 @@ impl<'r> ::core::fmt::Display for PatternUnionReader<'r> {
             PatternUnionReader::Segment(ref item) => {
                 write!(f, "{}::{}({})", Self::NAME, Segment::NAME, item)
             }
-            PatternUnionReader::SegmentVec(ref item) => {
-                write!(f, "{}::{}({})", Self::NAME, SegmentVec::NAME, item)
-            }
             PatternUnionReader::VariableSegment(ref item) => {
                 write!(f, "{}::{}({})", Self::NAME, VariableSegment::NAME, item)
             }
@@ -3974,7 +3963,6 @@ impl PatternUnion {
     pub(crate) fn display_inner(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         match self {
             PatternUnion::Segment(ref item) => write!(f, "{}", item),
-            PatternUnion::SegmentVec(ref item) => write!(f, "{}", item),
             PatternUnion::VariableSegment(ref item) => write!(f, "{}", item),
             PatternUnion::VariableSegmentVec(ref item) => write!(f, "{}", item),
         }
@@ -3984,7 +3972,6 @@ impl<'r> PatternUnionReader<'r> {
     pub(crate) fn display_inner(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         match self {
             PatternUnionReader::Segment(ref item) => write!(f, "{}", item),
-            PatternUnionReader::SegmentVec(ref item) => write!(f, "{}", item),
             PatternUnionReader::VariableSegment(ref item) => write!(f, "{}", item),
             PatternUnionReader::VariableSegmentVec(ref item) => write!(f, "{}", item),
         }
@@ -3993,11 +3980,6 @@ impl<'r> PatternUnionReader<'r> {
 impl ::core::convert::From<Segment> for PatternUnion {
     fn from(item: Segment) -> Self {
         PatternUnion::Segment(item)
-    }
-}
-impl ::core::convert::From<SegmentVec> for PatternUnion {
-    fn from(item: SegmentVec) -> Self {
-        PatternUnion::SegmentVec(item)
     }
 }
 impl ::core::convert::From<VariableSegment> for PatternUnion {
@@ -4015,11 +3997,6 @@ impl<'r> ::core::convert::From<SegmentReader<'r>> for PatternUnionReader<'r> {
         PatternUnionReader::Segment(item)
     }
 }
-impl<'r> ::core::convert::From<SegmentVecReader<'r>> for PatternUnionReader<'r> {
-    fn from(item: SegmentVecReader<'r>) -> Self {
-        PatternUnionReader::SegmentVec(item)
-    }
-}
 impl<'r> ::core::convert::From<VariableSegmentReader<'r>> for PatternUnionReader<'r> {
     fn from(item: VariableSegmentReader<'r>) -> Self {
         PatternUnionReader::VariableSegment(item)
@@ -4035,7 +4012,6 @@ impl PatternUnion {
     pub fn as_bytes(&self) -> molecule::bytes::Bytes {
         match self {
             PatternUnion::Segment(item) => item.as_bytes(),
-            PatternUnion::SegmentVec(item) => item.as_bytes(),
             PatternUnion::VariableSegment(item) => item.as_bytes(),
             PatternUnion::VariableSegmentVec(item) => item.as_bytes(),
         }
@@ -4043,7 +4019,6 @@ impl PatternUnion {
     pub fn as_slice(&self) -> &[u8] {
         match self {
             PatternUnion::Segment(item) => item.as_slice(),
-            PatternUnion::SegmentVec(item) => item.as_slice(),
             PatternUnion::VariableSegment(item) => item.as_slice(),
             PatternUnion::VariableSegmentVec(item) => item.as_slice(),
         }
@@ -4051,15 +4026,13 @@ impl PatternUnion {
     pub fn item_id(&self) -> molecule::Number {
         match self {
             PatternUnion::Segment(_) => 0,
-            PatternUnion::SegmentVec(_) => 1,
-            PatternUnion::VariableSegment(_) => 2,
-            PatternUnion::VariableSegmentVec(_) => 3,
+            PatternUnion::VariableSegment(_) => 1,
+            PatternUnion::VariableSegmentVec(_) => 2,
         }
     }
     pub fn item_name(&self) -> &str {
         match self {
             PatternUnion::Segment(_) => "Segment",
-            PatternUnion::SegmentVec(_) => "SegmentVec",
             PatternUnion::VariableSegment(_) => "VariableSegment",
             PatternUnion::VariableSegmentVec(_) => "VariableSegmentVec",
         }
@@ -4067,7 +4040,6 @@ impl PatternUnion {
     pub fn as_reader<'r>(&'r self) -> PatternUnionReader<'r> {
         match self {
             PatternUnion::Segment(item) => item.as_reader().into(),
-            PatternUnion::SegmentVec(item) => item.as_reader().into(),
             PatternUnion::VariableSegment(item) => item.as_reader().into(),
             PatternUnion::VariableSegmentVec(item) => item.as_reader().into(),
         }
@@ -4078,7 +4050,6 @@ impl<'r> PatternUnionReader<'r> {
     pub fn as_slice(&self) -> &'r [u8] {
         match self {
             PatternUnionReader::Segment(item) => item.as_slice(),
-            PatternUnionReader::SegmentVec(item) => item.as_slice(),
             PatternUnionReader::VariableSegment(item) => item.as_slice(),
             PatternUnionReader::VariableSegmentVec(item) => item.as_slice(),
         }
@@ -4086,15 +4057,13 @@ impl<'r> PatternUnionReader<'r> {
     pub fn item_id(&self) -> molecule::Number {
         match self {
             PatternUnionReader::Segment(_) => 0,
-            PatternUnionReader::SegmentVec(_) => 1,
-            PatternUnionReader::VariableSegment(_) => 2,
-            PatternUnionReader::VariableSegmentVec(_) => 3,
+            PatternUnionReader::VariableSegment(_) => 1,
+            PatternUnionReader::VariableSegmentVec(_) => 2,
         }
     }
     pub fn item_name(&self) -> &str {
         match self {
             PatternUnionReader::Segment(_) => "Segment",
-            PatternUnionReader::SegmentVec(_) => "SegmentVec",
             PatternUnionReader::VariableSegment(_) => "VariableSegment",
             PatternUnionReader::VariableSegmentVec(_) => "VariableSegmentVec",
         }
@@ -4102,11 +4071,6 @@ impl<'r> PatternUnionReader<'r> {
 }
 impl From<Segment> for Pattern {
     fn from(value: Segment) -> Self {
-        Self::new_builder().set(value).build()
-    }
-}
-impl From<SegmentVec> for Pattern {
-    fn from(value: SegmentVec) -> Self {
         Self::new_builder().set(value).build()
     }
 }
@@ -4121,8 +4085,8 @@ impl From<VariableSegmentVec> for Pattern {
     }
 }
 #[derive(Clone)]
-pub struct Schema(molecule::bytes::Bytes);
-impl ::core::fmt::LowerHex for Schema {
+pub struct PlayerSchema(molecule::bytes::Bytes);
+impl ::core::fmt::LowerHex for PlayerSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -4131,284 +4095,18 @@ impl ::core::fmt::LowerHex for Schema {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl ::core::fmt::Debug for Schema {
+impl ::core::fmt::Debug for PlayerSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl ::core::fmt::Display for Schema {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "occupied_bytes", self.occupied_bytes())?;
-        write!(f, ", {}: {}", "pattern", self.pattern())?;
-        let extra_count = self.count_extra_fields();
-        if extra_count != 0 {
-            write!(f, ", .. ({} fields)", extra_count)?;
-        }
-        write!(f, " }}")
-    }
-}
-impl ::core::default::Default for Schema {
-    fn default() -> Self {
-        let v = molecule::bytes::Bytes::from_static(&Self::DEFAULT_VALUE);
-        Schema::new_unchecked(v)
-    }
-}
-impl Schema {
-    const DEFAULT_VALUE: [u8; 38] = [
-        38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0,
-        0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
-    ];
-    pub const FIELD_COUNT: usize = 2;
-    pub fn total_size(&self) -> usize {
-        molecule::unpack_number(self.as_slice()) as usize
-    }
-    pub fn field_count(&self) -> usize {
-        if self.total_size() == molecule::NUMBER_SIZE {
-            0
-        } else {
-            (molecule::unpack_number(&self.as_slice()[molecule::NUMBER_SIZE..]) as usize / 4) - 1
-        }
-    }
-    pub fn count_extra_fields(&self) -> usize {
-        self.field_count() - Self::FIELD_COUNT
-    }
-    pub fn has_extra_fields(&self) -> bool {
-        Self::FIELD_COUNT != self.field_count()
-    }
-    pub fn occupied_bytes(&self) -> Byte {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[4..]) as usize;
-        let end = molecule::unpack_number(&slice[8..]) as usize;
-        Byte::new_unchecked(self.0.slice(start..end))
-    }
-    pub fn pattern(&self) -> Pattern {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[8..]) as usize;
-        if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[12..]) as usize;
-            Pattern::new_unchecked(self.0.slice(start..end))
-        } else {
-            Pattern::new_unchecked(self.0.slice(start..))
-        }
-    }
-    pub fn as_reader<'r>(&'r self) -> SchemaReader<'r> {
-        SchemaReader::new_unchecked(self.as_slice())
-    }
-}
-impl molecule::prelude::Entity for Schema {
-    type Builder = SchemaBuilder;
-    const NAME: &'static str = "Schema";
-    fn new_unchecked(data: molecule::bytes::Bytes) -> Self {
-        Schema(data)
-    }
-    fn as_bytes(&self) -> molecule::bytes::Bytes {
-        self.0.clone()
-    }
-    fn as_slice(&self) -> &[u8] {
-        &self.0[..]
-    }
-    fn from_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        SchemaReader::from_slice(slice).map(|reader| reader.to_entity())
-    }
-    fn from_compatible_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        SchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
-    }
-    fn new_builder() -> Self::Builder {
-        ::core::default::Default::default()
-    }
-    fn as_builder(self) -> Self::Builder {
-        Self::new_builder()
-            .occupied_bytes(self.occupied_bytes())
-            .pattern(self.pattern())
-    }
-}
-#[derive(Clone, Copy)]
-pub struct SchemaReader<'r>(&'r [u8]);
-impl<'r> ::core::fmt::LowerHex for SchemaReader<'r> {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        use molecule::hex_string;
-        if f.alternate() {
-            write!(f, "0x")?;
-        }
-        write!(f, "{}", hex_string(self.as_slice()))
-    }
-}
-impl<'r> ::core::fmt::Debug for SchemaReader<'r> {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        write!(f, "{}({:#x})", Self::NAME, self)
-    }
-}
-impl<'r> ::core::fmt::Display for SchemaReader<'r> {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "occupied_bytes", self.occupied_bytes())?;
-        write!(f, ", {}: {}", "pattern", self.pattern())?;
-        let extra_count = self.count_extra_fields();
-        if extra_count != 0 {
-            write!(f, ", .. ({} fields)", extra_count)?;
-        }
-        write!(f, " }}")
-    }
-}
-impl<'r> SchemaReader<'r> {
-    pub const FIELD_COUNT: usize = 2;
-    pub fn total_size(&self) -> usize {
-        molecule::unpack_number(self.as_slice()) as usize
-    }
-    pub fn field_count(&self) -> usize {
-        if self.total_size() == molecule::NUMBER_SIZE {
-            0
-        } else {
-            (molecule::unpack_number(&self.as_slice()[molecule::NUMBER_SIZE..]) as usize / 4) - 1
-        }
-    }
-    pub fn count_extra_fields(&self) -> usize {
-        self.field_count() - Self::FIELD_COUNT
-    }
-    pub fn has_extra_fields(&self) -> bool {
-        Self::FIELD_COUNT != self.field_count()
-    }
-    pub fn occupied_bytes(&self) -> ByteReader<'r> {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[4..]) as usize;
-        let end = molecule::unpack_number(&slice[8..]) as usize;
-        ByteReader::new_unchecked(&self.as_slice()[start..end])
-    }
-    pub fn pattern(&self) -> PatternReader<'r> {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[8..]) as usize;
-        if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[12..]) as usize;
-            PatternReader::new_unchecked(&self.as_slice()[start..end])
-        } else {
-            PatternReader::new_unchecked(&self.as_slice()[start..])
-        }
-    }
-}
-impl<'r> molecule::prelude::Reader<'r> for SchemaReader<'r> {
-    type Entity = Schema;
-    const NAME: &'static str = "SchemaReader";
-    fn to_entity(&self) -> Self::Entity {
-        Self::Entity::new_unchecked(self.as_slice().to_owned().into())
-    }
-    fn new_unchecked(slice: &'r [u8]) -> Self {
-        SchemaReader(slice)
-    }
-    fn as_slice(&self) -> &'r [u8] {
-        self.0
-    }
-    fn verify(slice: &[u8], compatible: bool) -> molecule::error::VerificationResult<()> {
-        use molecule::verification_error as ve;
-        let slice_len = slice.len();
-        if slice_len < molecule::NUMBER_SIZE {
-            return ve!(Self, HeaderIsBroken, molecule::NUMBER_SIZE, slice_len);
-        }
-        let total_size = molecule::unpack_number(slice) as usize;
-        if slice_len != total_size {
-            return ve!(Self, TotalSizeNotMatch, total_size, slice_len);
-        }
-        if slice_len < molecule::NUMBER_SIZE * 2 {
-            return ve!(Self, HeaderIsBroken, molecule::NUMBER_SIZE * 2, slice_len);
-        }
-        let offset_first = molecule::unpack_number(&slice[molecule::NUMBER_SIZE..]) as usize;
-        if offset_first % molecule::NUMBER_SIZE != 0 || offset_first < molecule::NUMBER_SIZE * 2 {
-            return ve!(Self, OffsetsNotMatch);
-        }
-        if slice_len < offset_first {
-            return ve!(Self, HeaderIsBroken, offset_first, slice_len);
-        }
-        let field_count = offset_first / molecule::NUMBER_SIZE - 1;
-        if field_count < Self::FIELD_COUNT {
-            return ve!(Self, FieldCountNotMatch, Self::FIELD_COUNT, field_count);
-        } else if !compatible && field_count > Self::FIELD_COUNT {
-            return ve!(Self, FieldCountNotMatch, Self::FIELD_COUNT, field_count);
-        };
-        let mut offsets: Vec<usize> = slice[molecule::NUMBER_SIZE..offset_first]
-            .chunks_exact(molecule::NUMBER_SIZE)
-            .map(|x| molecule::unpack_number(x) as usize)
-            .collect();
-        offsets.push(total_size);
-        if offsets.windows(2).any(|i| i[0] > i[1]) {
-            return ve!(Self, OffsetsNotMatch);
-        }
-        ByteReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
-        PatternReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
-        Ok(())
-    }
-}
-#[derive(Clone, Debug, Default)]
-pub struct SchemaBuilder {
-    pub(crate) occupied_bytes: Byte,
-    pub(crate) pattern: Pattern,
-}
-impl SchemaBuilder {
-    pub const FIELD_COUNT: usize = 2;
-    pub fn occupied_bytes(mut self, v: Byte) -> Self {
-        self.occupied_bytes = v;
-        self
-    }
-    pub fn pattern(mut self, v: Pattern) -> Self {
-        self.pattern = v;
-        self
-    }
-}
-impl molecule::prelude::Builder for SchemaBuilder {
-    type Entity = Schema;
-    const NAME: &'static str = "SchemaBuilder";
-    fn expected_length(&self) -> usize {
-        molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1)
-            + self.occupied_bytes.as_slice().len()
-            + self.pattern.as_slice().len()
-    }
-    fn write<W: molecule::io::Write>(&self, writer: &mut W) -> molecule::io::Result<()> {
-        let mut total_size = molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1);
-        let mut offsets = Vec::with_capacity(Self::FIELD_COUNT);
-        offsets.push(total_size);
-        total_size += self.occupied_bytes.as_slice().len();
-        offsets.push(total_size);
-        total_size += self.pattern.as_slice().len();
-        writer.write_all(&molecule::pack_number(total_size as molecule::Number))?;
-        for offset in offsets.into_iter() {
-            writer.write_all(&molecule::pack_number(offset as molecule::Number))?;
-        }
-        writer.write_all(self.occupied_bytes.as_slice())?;
-        writer.write_all(self.pattern.as_slice())?;
-        Ok(())
-    }
-    fn build(&self) -> Self::Entity {
-        let mut inner = Vec::with_capacity(self.expected_length());
-        self.write(&mut inner)
-            .unwrap_or_else(|_| panic!("{} build should be ok", Self::NAME));
-        Schema::new_unchecked(inner.into())
-    }
-}
-#[derive(Clone)]
-pub struct CharacterSchema(molecule::bytes::Bytes);
-impl ::core::fmt::LowerHex for CharacterSchema {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        use molecule::hex_string;
-        if f.alternate() {
-            write!(f, "0x")?;
-        }
-        write!(f, "{}", hex_string(self.as_slice()))
-    }
-}
-impl ::core::fmt::Debug for CharacterSchema {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-        write!(f, "{}({:#x})", Self::NAME, self)
-    }
-}
-impl ::core::fmt::Display for CharacterSchema {
+impl ::core::fmt::Display for PlayerSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
         write!(f, "{}: {}", "adjective", self.adjective())?;
         write!(f, ", {}: {}", "name", self.name())?;
         write!(f, ", {}: {}", "profession", self.profession())?;
-        write!(f, ", {}: {}", "hp", self.hp())?;
         write!(f, ", {}: {}", "power", self.power())?;
-        write!(f, ", {}: {}", "attack", self.attack())?;
-        write!(f, ", {}: {}", "defense", self.defense())?;
         write!(f, ", {}: {}", "gold", self.gold())?;
         write!(f, ", {}: {}", "card", self.card())?;
         let extra_count = self.count_extra_fields();
@@ -4418,30 +4116,23 @@ impl ::core::fmt::Display for CharacterSchema {
         write!(f, " }}")
     }
 }
-impl ::core::default::Default for CharacterSchema {
+impl ::core::default::Default for PlayerSchema {
     fn default() -> Self {
         let v = molecule::bytes::Bytes::from_static(&Self::DEFAULT_VALUE);
-        CharacterSchema::new_unchecked(v)
+        PlayerSchema::new_unchecked(v)
     }
 }
-impl CharacterSchema {
-    const DEFAULT_VALUE: [u8; 382] = [
-        126, 1, 0, 0, 40, 0, 0, 0, 78, 0, 0, 0, 116, 0, 0, 0, 154, 0, 0, 0, 192, 0, 0, 0, 230, 0,
-        0, 0, 12, 1, 0, 0, 50, 1, 0, 0, 88, 1, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0,
-        0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12,
-        0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0,
-        4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0,
-        13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0,
-        0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0,
-        0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13,
-        0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0,
-        21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0,
-        13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0,
-        0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0,
-        0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+impl PlayerSchema {
+    const DEFAULT_VALUE: [u8; 178] = [
+        178, 0, 0, 0, 28, 0, 0, 0, 53, 0, 0, 0, 78, 0, 0, 0, 103, 0, 0, 0, 128, 0, 0, 0, 153, 0, 0,
+        0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
+        0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0,
+        0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0,
+        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0,
+        0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0,
+        0, 0, 4, 0, 0, 0,
     ];
-    pub const FIELD_COUNT: usize = 9;
+    pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
     }
@@ -4458,73 +4149,55 @@ impl CharacterSchema {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn adjective(&self) -> Schema {
+    pub fn adjective(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn name(&self) -> Schema {
+    pub fn name(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn profession(&self) -> Schema {
+    pub fn profession(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn hp(&self) -> Schema {
+    pub fn power(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         let end = molecule::unpack_number(&slice[20..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn power(&self) -> Schema {
+    pub fn gold(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[20..]) as usize;
         let end = molecule::unpack_number(&slice[24..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn attack(&self) -> Schema {
+    pub fn card(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[24..]) as usize;
-        let end = molecule::unpack_number(&slice[28..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
-    }
-    pub fn defense(&self) -> Schema {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[28..]) as usize;
-        let end = molecule::unpack_number(&slice[32..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
-    }
-    pub fn gold(&self) -> Schema {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[32..]) as usize;
-        let end = molecule::unpack_number(&slice[36..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
-    }
-    pub fn card(&self) -> Schema {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[36..]) as usize;
         if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[40..]) as usize;
-            Schema::new_unchecked(self.0.slice(start..end))
+            let end = molecule::unpack_number(&slice[28..]) as usize;
+            Pattern::new_unchecked(self.0.slice(start..end))
         } else {
-            Schema::new_unchecked(self.0.slice(start..))
+            Pattern::new_unchecked(self.0.slice(start..))
         }
     }
-    pub fn as_reader<'r>(&'r self) -> CharacterSchemaReader<'r> {
-        CharacterSchemaReader::new_unchecked(self.as_slice())
+    pub fn as_reader<'r>(&'r self) -> PlayerSchemaReader<'r> {
+        PlayerSchemaReader::new_unchecked(self.as_slice())
     }
 }
-impl molecule::prelude::Entity for CharacterSchema {
-    type Builder = CharacterSchemaBuilder;
-    const NAME: &'static str = "CharacterSchema";
+impl molecule::prelude::Entity for PlayerSchema {
+    type Builder = PlayerSchemaBuilder;
+    const NAME: &'static str = "PlayerSchema";
     fn new_unchecked(data: molecule::bytes::Bytes) -> Self {
-        CharacterSchema(data)
+        PlayerSchema(data)
     }
     fn as_bytes(&self) -> molecule::bytes::Bytes {
         self.0.clone()
@@ -4533,10 +4206,10 @@ impl molecule::prelude::Entity for CharacterSchema {
         &self.0[..]
     }
     fn from_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        CharacterSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
+        PlayerSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
     }
     fn from_compatible_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        CharacterSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
+        PlayerSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
     }
     fn new_builder() -> Self::Builder {
         ::core::default::Default::default()
@@ -4546,17 +4219,14 @@ impl molecule::prelude::Entity for CharacterSchema {
             .adjective(self.adjective())
             .name(self.name())
             .profession(self.profession())
-            .hp(self.hp())
             .power(self.power())
-            .attack(self.attack())
-            .defense(self.defense())
             .gold(self.gold())
             .card(self.card())
     }
 }
 #[derive(Clone, Copy)]
-pub struct CharacterSchemaReader<'r>(&'r [u8]);
-impl<'r> ::core::fmt::LowerHex for CharacterSchemaReader<'r> {
+pub struct PlayerSchemaReader<'r>(&'r [u8]);
+impl<'r> ::core::fmt::LowerHex for PlayerSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -4565,21 +4235,18 @@ impl<'r> ::core::fmt::LowerHex for CharacterSchemaReader<'r> {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl<'r> ::core::fmt::Debug for CharacterSchemaReader<'r> {
+impl<'r> ::core::fmt::Debug for PlayerSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl<'r> ::core::fmt::Display for CharacterSchemaReader<'r> {
+impl<'r> ::core::fmt::Display for PlayerSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
         write!(f, "{}: {}", "adjective", self.adjective())?;
         write!(f, ", {}: {}", "name", self.name())?;
         write!(f, ", {}: {}", "profession", self.profession())?;
-        write!(f, ", {}: {}", "hp", self.hp())?;
         write!(f, ", {}: {}", "power", self.power())?;
-        write!(f, ", {}: {}", "attack", self.attack())?;
-        write!(f, ", {}: {}", "defense", self.defense())?;
         write!(f, ", {}: {}", "gold", self.gold())?;
         write!(f, ", {}: {}", "card", self.card())?;
         let extra_count = self.count_extra_fields();
@@ -4589,8 +4256,8 @@ impl<'r> ::core::fmt::Display for CharacterSchemaReader<'r> {
         write!(f, " }}")
     }
 }
-impl<'r> CharacterSchemaReader<'r> {
-    pub const FIELD_COUNT: usize = 9;
+impl<'r> PlayerSchemaReader<'r> {
+    pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
     }
@@ -4607,73 +4274,55 @@ impl<'r> CharacterSchemaReader<'r> {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn adjective(&self) -> SchemaReader<'r> {
+    pub fn adjective(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn name(&self) -> SchemaReader<'r> {
+    pub fn name(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn profession(&self) -> SchemaReader<'r> {
+    pub fn profession(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn hp(&self) -> SchemaReader<'r> {
+    pub fn power(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         let end = molecule::unpack_number(&slice[20..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn power(&self) -> SchemaReader<'r> {
+    pub fn gold(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[20..]) as usize;
         let end = molecule::unpack_number(&slice[24..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn attack(&self) -> SchemaReader<'r> {
+    pub fn card(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[24..]) as usize;
-        let end = molecule::unpack_number(&slice[28..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
-    }
-    pub fn defense(&self) -> SchemaReader<'r> {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[28..]) as usize;
-        let end = molecule::unpack_number(&slice[32..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
-    }
-    pub fn gold(&self) -> SchemaReader<'r> {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[32..]) as usize;
-        let end = molecule::unpack_number(&slice[36..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
-    }
-    pub fn card(&self) -> SchemaReader<'r> {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[36..]) as usize;
         if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[40..]) as usize;
-            SchemaReader::new_unchecked(&self.as_slice()[start..end])
+            let end = molecule::unpack_number(&slice[28..]) as usize;
+            PatternReader::new_unchecked(&self.as_slice()[start..end])
         } else {
-            SchemaReader::new_unchecked(&self.as_slice()[start..])
+            PatternReader::new_unchecked(&self.as_slice()[start..])
         }
     }
 }
-impl<'r> molecule::prelude::Reader<'r> for CharacterSchemaReader<'r> {
-    type Entity = CharacterSchema;
-    const NAME: &'static str = "CharacterSchemaReader";
+impl<'r> molecule::prelude::Reader<'r> for PlayerSchemaReader<'r> {
+    type Entity = PlayerSchema;
+    const NAME: &'static str = "PlayerSchemaReader";
     fn to_entity(&self) -> Self::Entity {
         Self::Entity::new_unchecked(self.as_slice().to_owned().into())
     }
     fn new_unchecked(slice: &'r [u8]) -> Self {
-        CharacterSchemaReader(slice)
+        PlayerSchemaReader(slice)
     }
     fn as_slice(&self) -> &'r [u8] {
         self.0
@@ -4712,81 +4361,60 @@ impl<'r> molecule::prelude::Reader<'r> for CharacterSchemaReader<'r> {
         if offsets.windows(2).any(|i| i[0] > i[1]) {
             return ve!(Self, OffsetsNotMatch);
         }
-        SchemaReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
-        SchemaReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
-        SchemaReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
-        SchemaReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
-        SchemaReader::verify(&slice[offsets[4]..offsets[5]], compatible)?;
-        SchemaReader::verify(&slice[offsets[5]..offsets[6]], compatible)?;
-        SchemaReader::verify(&slice[offsets[6]..offsets[7]], compatible)?;
-        SchemaReader::verify(&slice[offsets[7]..offsets[8]], compatible)?;
-        SchemaReader::verify(&slice[offsets[8]..offsets[9]], compatible)?;
+        PatternReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
+        PatternReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
+        PatternReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
+        PatternReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
+        PatternReader::verify(&slice[offsets[4]..offsets[5]], compatible)?;
+        PatternReader::verify(&slice[offsets[5]..offsets[6]], compatible)?;
         Ok(())
     }
 }
 #[derive(Clone, Debug, Default)]
-pub struct CharacterSchemaBuilder {
-    pub(crate) adjective: Schema,
-    pub(crate) name: Schema,
-    pub(crate) profession: Schema,
-    pub(crate) hp: Schema,
-    pub(crate) power: Schema,
-    pub(crate) attack: Schema,
-    pub(crate) defense: Schema,
-    pub(crate) gold: Schema,
-    pub(crate) card: Schema,
+pub struct PlayerSchemaBuilder {
+    pub(crate) adjective: Pattern,
+    pub(crate) name: Pattern,
+    pub(crate) profession: Pattern,
+    pub(crate) power: Pattern,
+    pub(crate) gold: Pattern,
+    pub(crate) card: Pattern,
 }
-impl CharacterSchemaBuilder {
-    pub const FIELD_COUNT: usize = 9;
-    pub fn adjective(mut self, v: Schema) -> Self {
+impl PlayerSchemaBuilder {
+    pub const FIELD_COUNT: usize = 6;
+    pub fn adjective(mut self, v: Pattern) -> Self {
         self.adjective = v;
         self
     }
-    pub fn name(mut self, v: Schema) -> Self {
+    pub fn name(mut self, v: Pattern) -> Self {
         self.name = v;
         self
     }
-    pub fn profession(mut self, v: Schema) -> Self {
+    pub fn profession(mut self, v: Pattern) -> Self {
         self.profession = v;
         self
     }
-    pub fn hp(mut self, v: Schema) -> Self {
-        self.hp = v;
-        self
-    }
-    pub fn power(mut self, v: Schema) -> Self {
+    pub fn power(mut self, v: Pattern) -> Self {
         self.power = v;
         self
     }
-    pub fn attack(mut self, v: Schema) -> Self {
-        self.attack = v;
-        self
-    }
-    pub fn defense(mut self, v: Schema) -> Self {
-        self.defense = v;
-        self
-    }
-    pub fn gold(mut self, v: Schema) -> Self {
+    pub fn gold(mut self, v: Pattern) -> Self {
         self.gold = v;
         self
     }
-    pub fn card(mut self, v: Schema) -> Self {
+    pub fn card(mut self, v: Pattern) -> Self {
         self.card = v;
         self
     }
 }
-impl molecule::prelude::Builder for CharacterSchemaBuilder {
-    type Entity = CharacterSchema;
-    const NAME: &'static str = "CharacterSchemaBuilder";
+impl molecule::prelude::Builder for PlayerSchemaBuilder {
+    type Entity = PlayerSchema;
+    const NAME: &'static str = "PlayerSchemaBuilder";
     fn expected_length(&self) -> usize {
         molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1)
             + self.adjective.as_slice().len()
             + self.name.as_slice().len()
             + self.profession.as_slice().len()
-            + self.hp.as_slice().len()
             + self.power.as_slice().len()
-            + self.attack.as_slice().len()
-            + self.defense.as_slice().len()
             + self.gold.as_slice().len()
             + self.card.as_slice().len()
     }
@@ -4800,13 +4428,7 @@ impl molecule::prelude::Builder for CharacterSchemaBuilder {
         offsets.push(total_size);
         total_size += self.profession.as_slice().len();
         offsets.push(total_size);
-        total_size += self.hp.as_slice().len();
-        offsets.push(total_size);
         total_size += self.power.as_slice().len();
-        offsets.push(total_size);
-        total_size += self.attack.as_slice().len();
-        offsets.push(total_size);
-        total_size += self.defense.as_slice().len();
         offsets.push(total_size);
         total_size += self.gold.as_slice().len();
         offsets.push(total_size);
@@ -4818,10 +4440,7 @@ impl molecule::prelude::Builder for CharacterSchemaBuilder {
         writer.write_all(self.adjective.as_slice())?;
         writer.write_all(self.name.as_slice())?;
         writer.write_all(self.profession.as_slice())?;
-        writer.write_all(self.hp.as_slice())?;
         writer.write_all(self.power.as_slice())?;
-        writer.write_all(self.attack.as_slice())?;
-        writer.write_all(self.defense.as_slice())?;
         writer.write_all(self.gold.as_slice())?;
         writer.write_all(self.card.as_slice())?;
         Ok(())
@@ -4830,12 +4449,12 @@ impl molecule::prelude::Builder for CharacterSchemaBuilder {
         let mut inner = Vec::with_capacity(self.expected_length());
         self.write(&mut inner)
             .unwrap_or_else(|_| panic!("{} build should be ok", Self::NAME));
-        CharacterSchema::new_unchecked(inner.into())
+        PlayerSchema::new_unchecked(inner.into())
     }
 }
 #[derive(Clone)]
-pub struct LocationSchema(molecule::bytes::Bytes);
-impl ::core::fmt::LowerHex for LocationSchema {
+pub struct SceneSchema(molecule::bytes::Bytes);
+impl ::core::fmt::LowerHex for SceneSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -4844,20 +4463,19 @@ impl ::core::fmt::LowerHex for LocationSchema {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl ::core::fmt::Debug for LocationSchema {
+impl ::core::fmt::Debug for SceneSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl ::core::fmt::Display for LocationSchema {
+impl ::core::fmt::Display for SceneSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "adjective", self.adjective())?;
-        write!(f, ", {}: {}", "name", self.name())?;
-        write!(f, ", {}: {}", "belonging", self.belonging())?;
-        write!(f, ", {}: {}", "coordinate", self.coordinate())?;
-        write!(f, ", {}: {}", "area", self.area())?;
-        write!(f, ", {}: {}", "color", self.color())?;
+        write!(f, "{}: {}", "name", self.name())?;
+        write!(f, ", {}: {}", "attribute", self.attribute())?;
+        write!(f, ", {}: {}", "operation", self.operation())?;
+        write!(f, ", {}: {}", "difficulty", self.difficulty())?;
+        write!(f, ", {}: {}", "score", self.score())?;
         write!(f, ", {}: {}", "commodity", self.commodity())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
@@ -4866,27 +4484,23 @@ impl ::core::fmt::Display for LocationSchema {
         write!(f, " }}")
     }
 }
-impl ::core::default::Default for LocationSchema {
+impl ::core::default::Default for SceneSchema {
     fn default() -> Self {
         let v = molecule::bytes::Bytes::from_static(&Self::DEFAULT_VALUE);
-        LocationSchema::new_unchecked(v)
+        SceneSchema::new_unchecked(v)
     }
 }
-impl LocationSchema {
-    const DEFAULT_VALUE: [u8; 298] = [
-        42, 1, 0, 0, 32, 0, 0, 0, 70, 0, 0, 0, 108, 0, 0, 0, 146, 0, 0, 0, 184, 0, 0, 0, 222, 0, 0,
-        0, 4, 1, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0,
-        0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0,
-        0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0,
-        13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0,
-        0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0,
-        0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13,
-        0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+impl SceneSchema {
+    const DEFAULT_VALUE: [u8; 178] = [
+        178, 0, 0, 0, 28, 0, 0, 0, 53, 0, 0, 0, 78, 0, 0, 0, 103, 0, 0, 0, 128, 0, 0, 0, 153, 0, 0,
+        0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
+        0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0,
+        0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0,
+        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0,
+        0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0,
+        0, 0, 4, 0, 0, 0,
     ];
-    pub const FIELD_COUNT: usize = 7;
+    pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
     }
@@ -4903,61 +4517,55 @@ impl LocationSchema {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn adjective(&self) -> Schema {
+    pub fn name(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn name(&self) -> Schema {
+    pub fn attribute(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn belonging(&self) -> Schema {
+    pub fn operation(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn coordinate(&self) -> Schema {
+    pub fn difficulty(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         let end = molecule::unpack_number(&slice[20..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn area(&self) -> Schema {
+    pub fn score(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[20..]) as usize;
         let end = molecule::unpack_number(&slice[24..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn color(&self) -> Schema {
+    pub fn commodity(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[24..]) as usize;
-        let end = molecule::unpack_number(&slice[28..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
-    }
-    pub fn commodity(&self) -> Schema {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[28..]) as usize;
         if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[32..]) as usize;
-            Schema::new_unchecked(self.0.slice(start..end))
+            let end = molecule::unpack_number(&slice[28..]) as usize;
+            Pattern::new_unchecked(self.0.slice(start..end))
         } else {
-            Schema::new_unchecked(self.0.slice(start..))
+            Pattern::new_unchecked(self.0.slice(start..))
         }
     }
-    pub fn as_reader<'r>(&'r self) -> LocationSchemaReader<'r> {
-        LocationSchemaReader::new_unchecked(self.as_slice())
+    pub fn as_reader<'r>(&'r self) -> SceneSchemaReader<'r> {
+        SceneSchemaReader::new_unchecked(self.as_slice())
     }
 }
-impl molecule::prelude::Entity for LocationSchema {
-    type Builder = LocationSchemaBuilder;
-    const NAME: &'static str = "LocationSchema";
+impl molecule::prelude::Entity for SceneSchema {
+    type Builder = SceneSchemaBuilder;
+    const NAME: &'static str = "SceneSchema";
     fn new_unchecked(data: molecule::bytes::Bytes) -> Self {
-        LocationSchema(data)
+        SceneSchema(data)
     }
     fn as_bytes(&self) -> molecule::bytes::Bytes {
         self.0.clone()
@@ -4966,28 +4574,27 @@ impl molecule::prelude::Entity for LocationSchema {
         &self.0[..]
     }
     fn from_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        LocationSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
+        SceneSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
     }
     fn from_compatible_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        LocationSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
+        SceneSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
     }
     fn new_builder() -> Self::Builder {
         ::core::default::Default::default()
     }
     fn as_builder(self) -> Self::Builder {
         Self::new_builder()
-            .adjective(self.adjective())
             .name(self.name())
-            .belonging(self.belonging())
-            .coordinate(self.coordinate())
-            .area(self.area())
-            .color(self.color())
+            .attribute(self.attribute())
+            .operation(self.operation())
+            .difficulty(self.difficulty())
+            .score(self.score())
             .commodity(self.commodity())
     }
 }
 #[derive(Clone, Copy)]
-pub struct LocationSchemaReader<'r>(&'r [u8]);
-impl<'r> ::core::fmt::LowerHex for LocationSchemaReader<'r> {
+pub struct SceneSchemaReader<'r>(&'r [u8]);
+impl<'r> ::core::fmt::LowerHex for SceneSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -4996,20 +4603,19 @@ impl<'r> ::core::fmt::LowerHex for LocationSchemaReader<'r> {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl<'r> ::core::fmt::Debug for LocationSchemaReader<'r> {
+impl<'r> ::core::fmt::Debug for SceneSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl<'r> ::core::fmt::Display for LocationSchemaReader<'r> {
+impl<'r> ::core::fmt::Display for SceneSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "adjective", self.adjective())?;
-        write!(f, ", {}: {}", "name", self.name())?;
-        write!(f, ", {}: {}", "belonging", self.belonging())?;
-        write!(f, ", {}: {}", "coordinate", self.coordinate())?;
-        write!(f, ", {}: {}", "area", self.area())?;
-        write!(f, ", {}: {}", "color", self.color())?;
+        write!(f, "{}: {}", "name", self.name())?;
+        write!(f, ", {}: {}", "attribute", self.attribute())?;
+        write!(f, ", {}: {}", "operation", self.operation())?;
+        write!(f, ", {}: {}", "difficulty", self.difficulty())?;
+        write!(f, ", {}: {}", "score", self.score())?;
         write!(f, ", {}: {}", "commodity", self.commodity())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
@@ -5018,8 +4624,8 @@ impl<'r> ::core::fmt::Display for LocationSchemaReader<'r> {
         write!(f, " }}")
     }
 }
-impl<'r> LocationSchemaReader<'r> {
-    pub const FIELD_COUNT: usize = 7;
+impl<'r> SceneSchemaReader<'r> {
+    pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
     }
@@ -5036,61 +4642,55 @@ impl<'r> LocationSchemaReader<'r> {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn adjective(&self) -> SchemaReader<'r> {
+    pub fn name(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn name(&self) -> SchemaReader<'r> {
+    pub fn attribute(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn belonging(&self) -> SchemaReader<'r> {
+    pub fn operation(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn coordinate(&self) -> SchemaReader<'r> {
+    pub fn difficulty(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         let end = molecule::unpack_number(&slice[20..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn area(&self) -> SchemaReader<'r> {
+    pub fn score(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[20..]) as usize;
         let end = molecule::unpack_number(&slice[24..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn color(&self) -> SchemaReader<'r> {
+    pub fn commodity(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[24..]) as usize;
-        let end = molecule::unpack_number(&slice[28..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
-    }
-    pub fn commodity(&self) -> SchemaReader<'r> {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[28..]) as usize;
         if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[32..]) as usize;
-            SchemaReader::new_unchecked(&self.as_slice()[start..end])
+            let end = molecule::unpack_number(&slice[28..]) as usize;
+            PatternReader::new_unchecked(&self.as_slice()[start..end])
         } else {
-            SchemaReader::new_unchecked(&self.as_slice()[start..])
+            PatternReader::new_unchecked(&self.as_slice()[start..])
         }
     }
 }
-impl<'r> molecule::prelude::Reader<'r> for LocationSchemaReader<'r> {
-    type Entity = LocationSchema;
-    const NAME: &'static str = "LocationSchemaReader";
+impl<'r> molecule::prelude::Reader<'r> for SceneSchemaReader<'r> {
+    type Entity = SceneSchema;
+    const NAME: &'static str = "SceneSchemaReader";
     fn to_entity(&self) -> Self::Entity {
         Self::Entity::new_unchecked(self.as_slice().to_owned().into())
     }
     fn new_unchecked(slice: &'r [u8]) -> Self {
-        LocationSchemaReader(slice)
+        SceneSchemaReader(slice)
     }
     fn as_slice(&self) -> &'r [u8] {
         self.0
@@ -5129,97 +4729,87 @@ impl<'r> molecule::prelude::Reader<'r> for LocationSchemaReader<'r> {
         if offsets.windows(2).any(|i| i[0] > i[1]) {
             return ve!(Self, OffsetsNotMatch);
         }
-        SchemaReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
-        SchemaReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
-        SchemaReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
-        SchemaReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
-        SchemaReader::verify(&slice[offsets[4]..offsets[5]], compatible)?;
-        SchemaReader::verify(&slice[offsets[5]..offsets[6]], compatible)?;
-        SchemaReader::verify(&slice[offsets[6]..offsets[7]], compatible)?;
+        PatternReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
+        PatternReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
+        PatternReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
+        PatternReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
+        PatternReader::verify(&slice[offsets[4]..offsets[5]], compatible)?;
+        PatternReader::verify(&slice[offsets[5]..offsets[6]], compatible)?;
         Ok(())
     }
 }
 #[derive(Clone, Debug, Default)]
-pub struct LocationSchemaBuilder {
-    pub(crate) adjective: Schema,
-    pub(crate) name: Schema,
-    pub(crate) belonging: Schema,
-    pub(crate) coordinate: Schema,
-    pub(crate) area: Schema,
-    pub(crate) color: Schema,
-    pub(crate) commodity: Schema,
+pub struct SceneSchemaBuilder {
+    pub(crate) name: Pattern,
+    pub(crate) attribute: Pattern,
+    pub(crate) operation: Pattern,
+    pub(crate) difficulty: Pattern,
+    pub(crate) score: Pattern,
+    pub(crate) commodity: Pattern,
 }
-impl LocationSchemaBuilder {
-    pub const FIELD_COUNT: usize = 7;
-    pub fn adjective(mut self, v: Schema) -> Self {
-        self.adjective = v;
-        self
-    }
-    pub fn name(mut self, v: Schema) -> Self {
+impl SceneSchemaBuilder {
+    pub const FIELD_COUNT: usize = 6;
+    pub fn name(mut self, v: Pattern) -> Self {
         self.name = v;
         self
     }
-    pub fn belonging(mut self, v: Schema) -> Self {
-        self.belonging = v;
+    pub fn attribute(mut self, v: Pattern) -> Self {
+        self.attribute = v;
         self
     }
-    pub fn coordinate(mut self, v: Schema) -> Self {
-        self.coordinate = v;
+    pub fn operation(mut self, v: Pattern) -> Self {
+        self.operation = v;
         self
     }
-    pub fn area(mut self, v: Schema) -> Self {
-        self.area = v;
+    pub fn difficulty(mut self, v: Pattern) -> Self {
+        self.difficulty = v;
         self
     }
-    pub fn color(mut self, v: Schema) -> Self {
-        self.color = v;
+    pub fn score(mut self, v: Pattern) -> Self {
+        self.score = v;
         self
     }
-    pub fn commodity(mut self, v: Schema) -> Self {
+    pub fn commodity(mut self, v: Pattern) -> Self {
         self.commodity = v;
         self
     }
 }
-impl molecule::prelude::Builder for LocationSchemaBuilder {
-    type Entity = LocationSchema;
-    const NAME: &'static str = "LocationSchemaBuilder";
+impl molecule::prelude::Builder for SceneSchemaBuilder {
+    type Entity = SceneSchema;
+    const NAME: &'static str = "SceneSchemaBuilder";
     fn expected_length(&self) -> usize {
         molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1)
-            + self.adjective.as_slice().len()
             + self.name.as_slice().len()
-            + self.belonging.as_slice().len()
-            + self.coordinate.as_slice().len()
-            + self.area.as_slice().len()
-            + self.color.as_slice().len()
+            + self.attribute.as_slice().len()
+            + self.operation.as_slice().len()
+            + self.difficulty.as_slice().len()
+            + self.score.as_slice().len()
             + self.commodity.as_slice().len()
     }
     fn write<W: molecule::io::Write>(&self, writer: &mut W) -> molecule::io::Result<()> {
         let mut total_size = molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1);
         let mut offsets = Vec::with_capacity(Self::FIELD_COUNT);
         offsets.push(total_size);
-        total_size += self.adjective.as_slice().len();
-        offsets.push(total_size);
         total_size += self.name.as_slice().len();
         offsets.push(total_size);
-        total_size += self.belonging.as_slice().len();
+        total_size += self.attribute.as_slice().len();
         offsets.push(total_size);
-        total_size += self.coordinate.as_slice().len();
+        total_size += self.operation.as_slice().len();
         offsets.push(total_size);
-        total_size += self.area.as_slice().len();
+        total_size += self.difficulty.as_slice().len();
         offsets.push(total_size);
-        total_size += self.color.as_slice().len();
+        total_size += self.score.as_slice().len();
         offsets.push(total_size);
         total_size += self.commodity.as_slice().len();
         writer.write_all(&molecule::pack_number(total_size as molecule::Number))?;
         for offset in offsets.into_iter() {
             writer.write_all(&molecule::pack_number(offset as molecule::Number))?;
         }
-        writer.write_all(self.adjective.as_slice())?;
         writer.write_all(self.name.as_slice())?;
-        writer.write_all(self.belonging.as_slice())?;
-        writer.write_all(self.coordinate.as_slice())?;
-        writer.write_all(self.area.as_slice())?;
-        writer.write_all(self.color.as_slice())?;
+        writer.write_all(self.attribute.as_slice())?;
+        writer.write_all(self.operation.as_slice())?;
+        writer.write_all(self.difficulty.as_slice())?;
+        writer.write_all(self.score.as_slice())?;
         writer.write_all(self.commodity.as_slice())?;
         Ok(())
     }
@@ -5227,12 +4817,12 @@ impl molecule::prelude::Builder for LocationSchemaBuilder {
         let mut inner = Vec::with_capacity(self.expected_length());
         self.write(&mut inner)
             .unwrap_or_else(|_| panic!("{} build should be ok", Self::NAME));
-        LocationSchema::new_unchecked(inner.into())
+        SceneSchema::new_unchecked(inner.into())
     }
 }
 #[derive(Clone)]
-pub struct DateSchema(molecule::bytes::Bytes);
-impl ::core::fmt::LowerHex for DateSchema {
+pub struct EnvironmentSchema(molecule::bytes::Bytes);
+impl ::core::fmt::LowerHex for EnvironmentSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -5241,21 +4831,19 @@ impl ::core::fmt::LowerHex for DateSchema {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl ::core::fmt::Debug for DateSchema {
+impl ::core::fmt::Debug for EnvironmentSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl ::core::fmt::Display for DateSchema {
+impl ::core::fmt::Display for EnvironmentSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "era", self.era())?;
-        write!(f, ", {}: {}", "year", self.year())?;
+        write!(f, "{}: {}", "adjective", self.adjective())?;
+        write!(f, ", {}: {}", "era", self.era())?;
         write!(f, ", {}: {}", "time", self.time())?;
-        write!(f, ", {}: {}", "weather", self.weather())?;
-        write!(f, ", {}: {}", "holiday", self.holiday())?;
-        write!(f, ", {}: {}", "season", self.season())?;
-        write!(f, ", {}: {}", "background", self.background())?;
+        write!(f, ", {}: {}", "mode", self.mode())?;
+        write!(f, ", {}: {}", "rank", self.rank())?;
         write!(f, ", {}: {}", "effect", self.effect())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
@@ -5264,28 +4852,23 @@ impl ::core::fmt::Display for DateSchema {
         write!(f, " }}")
     }
 }
-impl ::core::default::Default for DateSchema {
+impl ::core::default::Default for EnvironmentSchema {
     fn default() -> Self {
         let v = molecule::bytes::Bytes::from_static(&Self::DEFAULT_VALUE);
-        DateSchema::new_unchecked(v)
+        EnvironmentSchema::new_unchecked(v)
     }
 }
-impl DateSchema {
-    const DEFAULT_VALUE: [u8; 340] = [
-        84, 1, 0, 0, 36, 0, 0, 0, 74, 0, 0, 0, 112, 0, 0, 0, 150, 0, 0, 0, 188, 0, 0, 0, 226, 0, 0,
-        0, 8, 1, 0, 0, 46, 1, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0,
-        0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0,
-        0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0,
-        0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0,
-        0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12,
-        0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0,
-        0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0,
-        12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0,
-        0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0,
-        0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+impl EnvironmentSchema {
+    const DEFAULT_VALUE: [u8; 178] = [
+        178, 0, 0, 0, 28, 0, 0, 0, 53, 0, 0, 0, 78, 0, 0, 0, 103, 0, 0, 0, 128, 0, 0, 0, 153, 0, 0,
+        0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
+        0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0,
+        0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0,
+        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0,
+        0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0,
+        0, 0, 4, 0, 0, 0,
     ];
-    pub const FIELD_COUNT: usize = 8;
+    pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
     }
@@ -5302,67 +4885,55 @@ impl DateSchema {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn era(&self) -> Schema {
+    pub fn adjective(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn year(&self) -> Schema {
+    pub fn era(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn time(&self) -> Schema {
+    pub fn time(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn weather(&self) -> Schema {
+    pub fn mode(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         let end = molecule::unpack_number(&slice[20..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn holiday(&self) -> Schema {
+    pub fn rank(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[20..]) as usize;
         let end = molecule::unpack_number(&slice[24..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn season(&self) -> Schema {
+    pub fn effect(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[24..]) as usize;
-        let end = molecule::unpack_number(&slice[28..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
-    }
-    pub fn background(&self) -> Schema {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[28..]) as usize;
-        let end = molecule::unpack_number(&slice[32..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
-    }
-    pub fn effect(&self) -> Schema {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[32..]) as usize;
         if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[36..]) as usize;
-            Schema::new_unchecked(self.0.slice(start..end))
+            let end = molecule::unpack_number(&slice[28..]) as usize;
+            Pattern::new_unchecked(self.0.slice(start..end))
         } else {
-            Schema::new_unchecked(self.0.slice(start..))
+            Pattern::new_unchecked(self.0.slice(start..))
         }
     }
-    pub fn as_reader<'r>(&'r self) -> DateSchemaReader<'r> {
-        DateSchemaReader::new_unchecked(self.as_slice())
+    pub fn as_reader<'r>(&'r self) -> EnvironmentSchemaReader<'r> {
+        EnvironmentSchemaReader::new_unchecked(self.as_slice())
     }
 }
-impl molecule::prelude::Entity for DateSchema {
-    type Builder = DateSchemaBuilder;
-    const NAME: &'static str = "DateSchema";
+impl molecule::prelude::Entity for EnvironmentSchema {
+    type Builder = EnvironmentSchemaBuilder;
+    const NAME: &'static str = "EnvironmentSchema";
     fn new_unchecked(data: molecule::bytes::Bytes) -> Self {
-        DateSchema(data)
+        EnvironmentSchema(data)
     }
     fn as_bytes(&self) -> molecule::bytes::Bytes {
         self.0.clone()
@@ -5371,29 +4942,27 @@ impl molecule::prelude::Entity for DateSchema {
         &self.0[..]
     }
     fn from_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        DateSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
+        EnvironmentSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
     }
     fn from_compatible_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        DateSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
+        EnvironmentSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
     }
     fn new_builder() -> Self::Builder {
         ::core::default::Default::default()
     }
     fn as_builder(self) -> Self::Builder {
         Self::new_builder()
+            .adjective(self.adjective())
             .era(self.era())
-            .year(self.year())
             .time(self.time())
-            .weather(self.weather())
-            .holiday(self.holiday())
-            .season(self.season())
-            .background(self.background())
+            .mode(self.mode())
+            .rank(self.rank())
             .effect(self.effect())
     }
 }
 #[derive(Clone, Copy)]
-pub struct DateSchemaReader<'r>(&'r [u8]);
-impl<'r> ::core::fmt::LowerHex for DateSchemaReader<'r> {
+pub struct EnvironmentSchemaReader<'r>(&'r [u8]);
+impl<'r> ::core::fmt::LowerHex for EnvironmentSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -5402,21 +4971,19 @@ impl<'r> ::core::fmt::LowerHex for DateSchemaReader<'r> {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl<'r> ::core::fmt::Debug for DateSchemaReader<'r> {
+impl<'r> ::core::fmt::Debug for EnvironmentSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl<'r> ::core::fmt::Display for DateSchemaReader<'r> {
+impl<'r> ::core::fmt::Display for EnvironmentSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "era", self.era())?;
-        write!(f, ", {}: {}", "year", self.year())?;
+        write!(f, "{}: {}", "adjective", self.adjective())?;
+        write!(f, ", {}: {}", "era", self.era())?;
         write!(f, ", {}: {}", "time", self.time())?;
-        write!(f, ", {}: {}", "weather", self.weather())?;
-        write!(f, ", {}: {}", "holiday", self.holiday())?;
-        write!(f, ", {}: {}", "season", self.season())?;
-        write!(f, ", {}: {}", "background", self.background())?;
+        write!(f, ", {}: {}", "mode", self.mode())?;
+        write!(f, ", {}: {}", "rank", self.rank())?;
         write!(f, ", {}: {}", "effect", self.effect())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
@@ -5425,8 +4992,8 @@ impl<'r> ::core::fmt::Display for DateSchemaReader<'r> {
         write!(f, " }}")
     }
 }
-impl<'r> DateSchemaReader<'r> {
-    pub const FIELD_COUNT: usize = 8;
+impl<'r> EnvironmentSchemaReader<'r> {
+    pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
     }
@@ -5443,67 +5010,55 @@ impl<'r> DateSchemaReader<'r> {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn era(&self) -> SchemaReader<'r> {
+    pub fn adjective(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn year(&self) -> SchemaReader<'r> {
+    pub fn era(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn time(&self) -> SchemaReader<'r> {
+    pub fn time(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn weather(&self) -> SchemaReader<'r> {
+    pub fn mode(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         let end = molecule::unpack_number(&slice[20..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn holiday(&self) -> SchemaReader<'r> {
+    pub fn rank(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[20..]) as usize;
         let end = molecule::unpack_number(&slice[24..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn season(&self) -> SchemaReader<'r> {
+    pub fn effect(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[24..]) as usize;
-        let end = molecule::unpack_number(&slice[28..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
-    }
-    pub fn background(&self) -> SchemaReader<'r> {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[28..]) as usize;
-        let end = molecule::unpack_number(&slice[32..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
-    }
-    pub fn effect(&self) -> SchemaReader<'r> {
-        let slice = self.as_slice();
-        let start = molecule::unpack_number(&slice[32..]) as usize;
         if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[36..]) as usize;
-            SchemaReader::new_unchecked(&self.as_slice()[start..end])
+            let end = molecule::unpack_number(&slice[28..]) as usize;
+            PatternReader::new_unchecked(&self.as_slice()[start..end])
         } else {
-            SchemaReader::new_unchecked(&self.as_slice()[start..])
+            PatternReader::new_unchecked(&self.as_slice()[start..])
         }
     }
 }
-impl<'r> molecule::prelude::Reader<'r> for DateSchemaReader<'r> {
-    type Entity = DateSchema;
-    const NAME: &'static str = "DateSchemaReader";
+impl<'r> molecule::prelude::Reader<'r> for EnvironmentSchemaReader<'r> {
+    type Entity = EnvironmentSchema;
+    const NAME: &'static str = "EnvironmentSchemaReader";
     fn to_entity(&self) -> Self::Entity {
         Self::Entity::new_unchecked(self.as_slice().to_owned().into())
     }
     fn new_unchecked(slice: &'r [u8]) -> Self {
-        DateSchemaReader(slice)
+        EnvironmentSchemaReader(slice)
     }
     fn as_slice(&self) -> &'r [u8] {
         self.0
@@ -5542,107 +5097,87 @@ impl<'r> molecule::prelude::Reader<'r> for DateSchemaReader<'r> {
         if offsets.windows(2).any(|i| i[0] > i[1]) {
             return ve!(Self, OffsetsNotMatch);
         }
-        SchemaReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
-        SchemaReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
-        SchemaReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
-        SchemaReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
-        SchemaReader::verify(&slice[offsets[4]..offsets[5]], compatible)?;
-        SchemaReader::verify(&slice[offsets[5]..offsets[6]], compatible)?;
-        SchemaReader::verify(&slice[offsets[6]..offsets[7]], compatible)?;
-        SchemaReader::verify(&slice[offsets[7]..offsets[8]], compatible)?;
+        PatternReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
+        PatternReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
+        PatternReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
+        PatternReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
+        PatternReader::verify(&slice[offsets[4]..offsets[5]], compatible)?;
+        PatternReader::verify(&slice[offsets[5]..offsets[6]], compatible)?;
         Ok(())
     }
 }
 #[derive(Clone, Debug, Default)]
-pub struct DateSchemaBuilder {
-    pub(crate) era: Schema,
-    pub(crate) year: Schema,
-    pub(crate) time: Schema,
-    pub(crate) weather: Schema,
-    pub(crate) holiday: Schema,
-    pub(crate) season: Schema,
-    pub(crate) background: Schema,
-    pub(crate) effect: Schema,
+pub struct EnvironmentSchemaBuilder {
+    pub(crate) adjective: Pattern,
+    pub(crate) era: Pattern,
+    pub(crate) time: Pattern,
+    pub(crate) mode: Pattern,
+    pub(crate) rank: Pattern,
+    pub(crate) effect: Pattern,
 }
-impl DateSchemaBuilder {
-    pub const FIELD_COUNT: usize = 8;
-    pub fn era(mut self, v: Schema) -> Self {
+impl EnvironmentSchemaBuilder {
+    pub const FIELD_COUNT: usize = 6;
+    pub fn adjective(mut self, v: Pattern) -> Self {
+        self.adjective = v;
+        self
+    }
+    pub fn era(mut self, v: Pattern) -> Self {
         self.era = v;
         self
     }
-    pub fn year(mut self, v: Schema) -> Self {
-        self.year = v;
-        self
-    }
-    pub fn time(mut self, v: Schema) -> Self {
+    pub fn time(mut self, v: Pattern) -> Self {
         self.time = v;
         self
     }
-    pub fn weather(mut self, v: Schema) -> Self {
-        self.weather = v;
+    pub fn mode(mut self, v: Pattern) -> Self {
+        self.mode = v;
         self
     }
-    pub fn holiday(mut self, v: Schema) -> Self {
-        self.holiday = v;
+    pub fn rank(mut self, v: Pattern) -> Self {
+        self.rank = v;
         self
     }
-    pub fn season(mut self, v: Schema) -> Self {
-        self.season = v;
-        self
-    }
-    pub fn background(mut self, v: Schema) -> Self {
-        self.background = v;
-        self
-    }
-    pub fn effect(mut self, v: Schema) -> Self {
+    pub fn effect(mut self, v: Pattern) -> Self {
         self.effect = v;
         self
     }
 }
-impl molecule::prelude::Builder for DateSchemaBuilder {
-    type Entity = DateSchema;
-    const NAME: &'static str = "DateSchemaBuilder";
+impl molecule::prelude::Builder for EnvironmentSchemaBuilder {
+    type Entity = EnvironmentSchema;
+    const NAME: &'static str = "EnvironmentSchemaBuilder";
     fn expected_length(&self) -> usize {
         molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1)
+            + self.adjective.as_slice().len()
             + self.era.as_slice().len()
-            + self.year.as_slice().len()
             + self.time.as_slice().len()
-            + self.weather.as_slice().len()
-            + self.holiday.as_slice().len()
-            + self.season.as_slice().len()
-            + self.background.as_slice().len()
+            + self.mode.as_slice().len()
+            + self.rank.as_slice().len()
             + self.effect.as_slice().len()
     }
     fn write<W: molecule::io::Write>(&self, writer: &mut W) -> molecule::io::Result<()> {
         let mut total_size = molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1);
         let mut offsets = Vec::with_capacity(Self::FIELD_COUNT);
         offsets.push(total_size);
-        total_size += self.era.as_slice().len();
+        total_size += self.adjective.as_slice().len();
         offsets.push(total_size);
-        total_size += self.year.as_slice().len();
+        total_size += self.era.as_slice().len();
         offsets.push(total_size);
         total_size += self.time.as_slice().len();
         offsets.push(total_size);
-        total_size += self.weather.as_slice().len();
+        total_size += self.mode.as_slice().len();
         offsets.push(total_size);
-        total_size += self.holiday.as_slice().len();
-        offsets.push(total_size);
-        total_size += self.season.as_slice().len();
-        offsets.push(total_size);
-        total_size += self.background.as_slice().len();
+        total_size += self.rank.as_slice().len();
         offsets.push(total_size);
         total_size += self.effect.as_slice().len();
         writer.write_all(&molecule::pack_number(total_size as molecule::Number))?;
         for offset in offsets.into_iter() {
             writer.write_all(&molecule::pack_number(offset as molecule::Number))?;
         }
+        writer.write_all(self.adjective.as_slice())?;
         writer.write_all(self.era.as_slice())?;
-        writer.write_all(self.year.as_slice())?;
         writer.write_all(self.time.as_slice())?;
-        writer.write_all(self.weather.as_slice())?;
-        writer.write_all(self.holiday.as_slice())?;
-        writer.write_all(self.season.as_slice())?;
-        writer.write_all(self.background.as_slice())?;
+        writer.write_all(self.mode.as_slice())?;
+        writer.write_all(self.rank.as_slice())?;
         writer.write_all(self.effect.as_slice())?;
         Ok(())
     }
@@ -5650,12 +5185,12 @@ impl molecule::prelude::Builder for DateSchemaBuilder {
         let mut inner = Vec::with_capacity(self.expected_length());
         self.write(&mut inner)
             .unwrap_or_else(|_| panic!("{} build should be ok", Self::NAME));
-        DateSchema::new_unchecked(inner.into())
+        EnvironmentSchema::new_unchecked(inner.into())
     }
 }
 #[derive(Clone)]
-pub struct StorySchema(molecule::bytes::Bytes);
-impl ::core::fmt::LowerHex for StorySchema {
+pub struct ChronicleSchema(molecule::bytes::Bytes);
+impl ::core::fmt::LowerHex for ChronicleSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -5664,18 +5199,20 @@ impl ::core::fmt::LowerHex for StorySchema {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl ::core::fmt::Debug for StorySchema {
+impl ::core::fmt::Debug for ChronicleSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl ::core::fmt::Display for StorySchema {
+impl ::core::fmt::Display for ChronicleSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "character", self.character())?;
-        write!(f, ", {}: {}", "location", self.location())?;
-        write!(f, ", {}: {}", "date", self.date())?;
-        write!(f, ", {}: {}", "event", self.event())?;
+        write!(f, "{}: {}", "player", self.player())?;
+        write!(f, ", {}: {}", "scene", self.scene())?;
+        write!(f, ", {}: {}", "environment", self.environment())?;
+        write!(f, ", {}: {}", "transition", self.transition())?;
+        write!(f, ", {}: {}", "climax", self.climax())?;
+        write!(f, ", {}: {}", "ending", self.ending())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
             write!(f, ", .. ({} fields)", extra_count)?;
@@ -5683,23 +5220,23 @@ impl ::core::fmt::Display for StorySchema {
         write!(f, " }}")
     }
 }
-impl ::core::default::Default for StorySchema {
+impl ::core::default::Default for ChronicleSchema {
     fn default() -> Self {
         let v = molecule::bytes::Bytes::from_static(&Self::DEFAULT_VALUE);
-        StorySchema::new_unchecked(v)
+        ChronicleSchema::new_unchecked(v)
     }
 }
-impl StorySchema {
-    const DEFAULT_VALUE: [u8; 172] = [
-        172, 0, 0, 0, 20, 0, 0, 0, 58, 0, 0, 0, 96, 0, 0, 0, 134, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0,
-        0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13,
-        0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0,
-        21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0,
-        13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0,
-        0,
+impl ChronicleSchema {
+    const DEFAULT_VALUE: [u8; 178] = [
+        178, 0, 0, 0, 28, 0, 0, 0, 53, 0, 0, 0, 78, 0, 0, 0, 103, 0, 0, 0, 128, 0, 0, 0, 153, 0, 0,
+        0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
+        0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0,
+        0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0,
+        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0,
+        0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0,
+        0, 0, 4, 0, 0, 0,
     ];
-    pub const FIELD_COUNT: usize = 4;
+    pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
     }
@@ -5716,43 +5253,55 @@ impl StorySchema {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn character(&self) -> Schema {
+    pub fn player(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn location(&self) -> Schema {
+    pub fn scene(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn date(&self) -> Schema {
+    pub fn environment(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        Schema::new_unchecked(self.0.slice(start..end))
+        Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn event(&self) -> Schema {
+    pub fn transition(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
+        let end = molecule::unpack_number(&slice[20..]) as usize;
+        Pattern::new_unchecked(self.0.slice(start..end))
+    }
+    pub fn climax(&self) -> Pattern {
+        let slice = self.as_slice();
+        let start = molecule::unpack_number(&slice[20..]) as usize;
+        let end = molecule::unpack_number(&slice[24..]) as usize;
+        Pattern::new_unchecked(self.0.slice(start..end))
+    }
+    pub fn ending(&self) -> Pattern {
+        let slice = self.as_slice();
+        let start = molecule::unpack_number(&slice[24..]) as usize;
         if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[20..]) as usize;
-            Schema::new_unchecked(self.0.slice(start..end))
+            let end = molecule::unpack_number(&slice[28..]) as usize;
+            Pattern::new_unchecked(self.0.slice(start..end))
         } else {
-            Schema::new_unchecked(self.0.slice(start..))
+            Pattern::new_unchecked(self.0.slice(start..))
         }
     }
-    pub fn as_reader<'r>(&'r self) -> StorySchemaReader<'r> {
-        StorySchemaReader::new_unchecked(self.as_slice())
+    pub fn as_reader<'r>(&'r self) -> ChronicleSchemaReader<'r> {
+        ChronicleSchemaReader::new_unchecked(self.as_slice())
     }
 }
-impl molecule::prelude::Entity for StorySchema {
-    type Builder = StorySchemaBuilder;
-    const NAME: &'static str = "StorySchema";
+impl molecule::prelude::Entity for ChronicleSchema {
+    type Builder = ChronicleSchemaBuilder;
+    const NAME: &'static str = "ChronicleSchema";
     fn new_unchecked(data: molecule::bytes::Bytes) -> Self {
-        StorySchema(data)
+        ChronicleSchema(data)
     }
     fn as_bytes(&self) -> molecule::bytes::Bytes {
         self.0.clone()
@@ -5761,25 +5310,27 @@ impl molecule::prelude::Entity for StorySchema {
         &self.0[..]
     }
     fn from_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        StorySchemaReader::from_slice(slice).map(|reader| reader.to_entity())
+        ChronicleSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
     }
     fn from_compatible_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        StorySchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
+        ChronicleSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
     }
     fn new_builder() -> Self::Builder {
         ::core::default::Default::default()
     }
     fn as_builder(self) -> Self::Builder {
         Self::new_builder()
-            .character(self.character())
-            .location(self.location())
-            .date(self.date())
-            .event(self.event())
+            .player(self.player())
+            .scene(self.scene())
+            .environment(self.environment())
+            .transition(self.transition())
+            .climax(self.climax())
+            .ending(self.ending())
     }
 }
 #[derive(Clone, Copy)]
-pub struct StorySchemaReader<'r>(&'r [u8]);
-impl<'r> ::core::fmt::LowerHex for StorySchemaReader<'r> {
+pub struct ChronicleSchemaReader<'r>(&'r [u8]);
+impl<'r> ::core::fmt::LowerHex for ChronicleSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -5788,18 +5339,20 @@ impl<'r> ::core::fmt::LowerHex for StorySchemaReader<'r> {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl<'r> ::core::fmt::Debug for StorySchemaReader<'r> {
+impl<'r> ::core::fmt::Debug for ChronicleSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl<'r> ::core::fmt::Display for StorySchemaReader<'r> {
+impl<'r> ::core::fmt::Display for ChronicleSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "character", self.character())?;
-        write!(f, ", {}: {}", "location", self.location())?;
-        write!(f, ", {}: {}", "date", self.date())?;
-        write!(f, ", {}: {}", "event", self.event())?;
+        write!(f, "{}: {}", "player", self.player())?;
+        write!(f, ", {}: {}", "scene", self.scene())?;
+        write!(f, ", {}: {}", "environment", self.environment())?;
+        write!(f, ", {}: {}", "transition", self.transition())?;
+        write!(f, ", {}: {}", "climax", self.climax())?;
+        write!(f, ", {}: {}", "ending", self.ending())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
             write!(f, ", .. ({} fields)", extra_count)?;
@@ -5807,8 +5360,8 @@ impl<'r> ::core::fmt::Display for StorySchemaReader<'r> {
         write!(f, " }}")
     }
 }
-impl<'r> StorySchemaReader<'r> {
-    pub const FIELD_COUNT: usize = 4;
+impl<'r> ChronicleSchemaReader<'r> {
+    pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
     }
@@ -5825,43 +5378,55 @@ impl<'r> StorySchemaReader<'r> {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn character(&self) -> SchemaReader<'r> {
+    pub fn player(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn location(&self) -> SchemaReader<'r> {
+    pub fn scene(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn date(&self) -> SchemaReader<'r> {
+    pub fn environment(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        SchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn event(&self) -> SchemaReader<'r> {
+    pub fn transition(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
+        let end = molecule::unpack_number(&slice[20..]) as usize;
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
+    }
+    pub fn climax(&self) -> PatternReader<'r> {
+        let slice = self.as_slice();
+        let start = molecule::unpack_number(&slice[20..]) as usize;
+        let end = molecule::unpack_number(&slice[24..]) as usize;
+        PatternReader::new_unchecked(&self.as_slice()[start..end])
+    }
+    pub fn ending(&self) -> PatternReader<'r> {
+        let slice = self.as_slice();
+        let start = molecule::unpack_number(&slice[24..]) as usize;
         if self.has_extra_fields() {
-            let end = molecule::unpack_number(&slice[20..]) as usize;
-            SchemaReader::new_unchecked(&self.as_slice()[start..end])
+            let end = molecule::unpack_number(&slice[28..]) as usize;
+            PatternReader::new_unchecked(&self.as_slice()[start..end])
         } else {
-            SchemaReader::new_unchecked(&self.as_slice()[start..])
+            PatternReader::new_unchecked(&self.as_slice()[start..])
         }
     }
 }
-impl<'r> molecule::prelude::Reader<'r> for StorySchemaReader<'r> {
-    type Entity = StorySchema;
-    const NAME: &'static str = "StorySchemaReader";
+impl<'r> molecule::prelude::Reader<'r> for ChronicleSchemaReader<'r> {
+    type Entity = ChronicleSchema;
+    const NAME: &'static str = "ChronicleSchemaReader";
     fn to_entity(&self) -> Self::Entity {
         Self::Entity::new_unchecked(self.as_slice().to_owned().into())
     }
     fn new_unchecked(slice: &'r [u8]) -> Self {
-        StorySchemaReader(slice)
+        ChronicleSchemaReader(slice)
     }
     fn as_slice(&self) -> &'r [u8] {
         self.0
@@ -5900,75 +5465,95 @@ impl<'r> molecule::prelude::Reader<'r> for StorySchemaReader<'r> {
         if offsets.windows(2).any(|i| i[0] > i[1]) {
             return ve!(Self, OffsetsNotMatch);
         }
-        SchemaReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
-        SchemaReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
-        SchemaReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
-        SchemaReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
+        PatternReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
+        PatternReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
+        PatternReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
+        PatternReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
+        PatternReader::verify(&slice[offsets[4]..offsets[5]], compatible)?;
+        PatternReader::verify(&slice[offsets[5]..offsets[6]], compatible)?;
         Ok(())
     }
 }
 #[derive(Clone, Debug, Default)]
-pub struct StorySchemaBuilder {
-    pub(crate) character: Schema,
-    pub(crate) location: Schema,
-    pub(crate) date: Schema,
-    pub(crate) event: Schema,
+pub struct ChronicleSchemaBuilder {
+    pub(crate) player: Pattern,
+    pub(crate) scene: Pattern,
+    pub(crate) environment: Pattern,
+    pub(crate) transition: Pattern,
+    pub(crate) climax: Pattern,
+    pub(crate) ending: Pattern,
 }
-impl StorySchemaBuilder {
-    pub const FIELD_COUNT: usize = 4;
-    pub fn character(mut self, v: Schema) -> Self {
-        self.character = v;
+impl ChronicleSchemaBuilder {
+    pub const FIELD_COUNT: usize = 6;
+    pub fn player(mut self, v: Pattern) -> Self {
+        self.player = v;
         self
     }
-    pub fn location(mut self, v: Schema) -> Self {
-        self.location = v;
+    pub fn scene(mut self, v: Pattern) -> Self {
+        self.scene = v;
         self
     }
-    pub fn date(mut self, v: Schema) -> Self {
-        self.date = v;
+    pub fn environment(mut self, v: Pattern) -> Self {
+        self.environment = v;
         self
     }
-    pub fn event(mut self, v: Schema) -> Self {
-        self.event = v;
+    pub fn transition(mut self, v: Pattern) -> Self {
+        self.transition = v;
+        self
+    }
+    pub fn climax(mut self, v: Pattern) -> Self {
+        self.climax = v;
+        self
+    }
+    pub fn ending(mut self, v: Pattern) -> Self {
+        self.ending = v;
         self
     }
 }
-impl molecule::prelude::Builder for StorySchemaBuilder {
-    type Entity = StorySchema;
-    const NAME: &'static str = "StorySchemaBuilder";
+impl molecule::prelude::Builder for ChronicleSchemaBuilder {
+    type Entity = ChronicleSchema;
+    const NAME: &'static str = "ChronicleSchemaBuilder";
     fn expected_length(&self) -> usize {
         molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1)
-            + self.character.as_slice().len()
-            + self.location.as_slice().len()
-            + self.date.as_slice().len()
-            + self.event.as_slice().len()
+            + self.player.as_slice().len()
+            + self.scene.as_slice().len()
+            + self.environment.as_slice().len()
+            + self.transition.as_slice().len()
+            + self.climax.as_slice().len()
+            + self.ending.as_slice().len()
     }
     fn write<W: molecule::io::Write>(&self, writer: &mut W) -> molecule::io::Result<()> {
         let mut total_size = molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1);
         let mut offsets = Vec::with_capacity(Self::FIELD_COUNT);
         offsets.push(total_size);
-        total_size += self.character.as_slice().len();
+        total_size += self.player.as_slice().len();
         offsets.push(total_size);
-        total_size += self.location.as_slice().len();
+        total_size += self.scene.as_slice().len();
         offsets.push(total_size);
-        total_size += self.date.as_slice().len();
+        total_size += self.environment.as_slice().len();
         offsets.push(total_size);
-        total_size += self.event.as_slice().len();
+        total_size += self.transition.as_slice().len();
+        offsets.push(total_size);
+        total_size += self.climax.as_slice().len();
+        offsets.push(total_size);
+        total_size += self.ending.as_slice().len();
         writer.write_all(&molecule::pack_number(total_size as molecule::Number))?;
         for offset in offsets.into_iter() {
             writer.write_all(&molecule::pack_number(offset as molecule::Number))?;
         }
-        writer.write_all(self.character.as_slice())?;
-        writer.write_all(self.location.as_slice())?;
-        writer.write_all(self.date.as_slice())?;
-        writer.write_all(self.event.as_slice())?;
+        writer.write_all(self.player.as_slice())?;
+        writer.write_all(self.scene.as_slice())?;
+        writer.write_all(self.environment.as_slice())?;
+        writer.write_all(self.transition.as_slice())?;
+        writer.write_all(self.climax.as_slice())?;
+        writer.write_all(self.ending.as_slice())?;
         Ok(())
     }
     fn build(&self) -> Self::Entity {
         let mut inner = Vec::with_capacity(self.expected_length());
         self.write(&mut inner)
             .unwrap_or_else(|_| panic!("{} build should be ok", Self::NAME));
-        StorySchema::new_unchecked(inner.into())
+        ChronicleSchema::new_unchecked(inner.into())
     }
 }
 #[derive(Clone)]
@@ -5990,10 +5575,10 @@ impl ::core::fmt::Debug for AshWarChronicle {
 impl ::core::fmt::Display for AshWarChronicle {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "character_schema", self.character_schema())?;
-        write!(f, ", {}: {}", "location_schema", self.location_schema())?;
-        write!(f, ", {}: {}", "date_schema", self.date_schema())?;
-        write!(f, ", {}: {}", "story_schema", self.story_schema())?;
+        write!(f, "{}: {}", "player", self.player())?;
+        write!(f, ", {}: {}", "scene", self.scene())?;
+        write!(f, ", {}: {}", "envionment", self.envionment())?;
+        write!(f, ", {}: {}", "chronicle", self.chronicle())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
             write!(f, ", .. ({} fields)", extra_count)?;
@@ -6008,50 +5593,33 @@ impl ::core::default::Default for AshWarChronicle {
     }
 }
 impl AshWarChronicle {
-    const DEFAULT_VALUE: [u8; 1212] = [
-        188, 4, 0, 0, 20, 0, 0, 0, 146, 1, 0, 0, 188, 2, 0, 0, 16, 4, 0, 0, 126, 1, 0, 0, 40, 0, 0,
-        0, 78, 0, 0, 0, 116, 0, 0, 0, 154, 0, 0, 0, 192, 0, 0, 0, 230, 0, 0, 0, 12, 1, 0, 0, 50, 1,
-        0, 0, 88, 1, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12,
-        0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0,
-        0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0,
-        12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0,
-        0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0,
-        0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0,
-        0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0,
-        13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0,
-        0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0,
-        0, 0, 42, 1, 0, 0, 32, 0, 0, 0, 70, 0, 0, 0, 108, 0, 0, 0, 146, 0, 0, 0, 184, 0, 0, 0, 222,
-        0, 0, 0, 4, 1, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12,
-        0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0,
-        0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0,
-        12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0,
-        0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0,
-        0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0,
-        0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0,
-        13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 84, 1, 0, 0, 36, 0, 0, 0, 74, 0, 0, 0, 112, 0, 0,
-        0, 150, 0, 0, 0, 188, 0, 0, 0, 226, 0, 0, 0, 8, 1, 0, 0, 46, 1, 0, 0, 38, 0, 0, 0, 12, 0,
-        0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4,
-        0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0,
-        13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0,
-        0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0,
-        0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13,
-        0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0,
-        21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0,
-        13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0,
-        0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0,
-        0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 172, 0, 0, 0, 20, 0, 0, 0, 58, 0, 0, 0, 96, 0, 0, 0, 134,
-        0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0,
-        13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0,
-        0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 38, 0, 0, 0, 12, 0, 0,
-        0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0,
-        0, 0, 38, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13,
-        0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+    const DEFAULT_VALUE: [u8; 732] = [
+        220, 2, 0, 0, 20, 0, 0, 0, 198, 0, 0, 0, 120, 1, 0, 0, 42, 2, 0, 0, 178, 0, 0, 0, 28, 0, 0,
+        0, 53, 0, 0, 0, 78, 0, 0, 0, 103, 0, 0, 0, 128, 0, 0, 0, 153, 0, 0, 0, 0, 0, 0, 0, 21, 0,
+        0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0,
+        0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0,
+        0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0,
+        0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4,
+        0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 178,
+        0, 0, 0, 28, 0, 0, 0, 53, 0, 0, 0, 78, 0, 0, 0, 103, 0, 0, 0, 128, 0, 0, 0, 153, 0, 0, 0,
+        0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+        21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0,
+        12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0,
+        13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0,
+        0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0,
+        0, 4, 0, 0, 0, 178, 0, 0, 0, 28, 0, 0, 0, 53, 0, 0, 0, 78, 0, 0, 0, 103, 0, 0, 0, 128, 0,
+        0, 0, 153, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0,
+        0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0,
+        0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0,
+        0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0,
+        0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0,
+        0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 178, 0, 0, 0, 28, 0, 0, 0, 53, 0, 0, 0, 78, 0, 0, 0, 103,
+        0, 0, 0, 128, 0, 0, 0, 153, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0,
+        0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0,
+        4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
+        0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0,
+        21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0,
+        12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0,
     ];
     pub const FIELD_COUNT: usize = 4;
     pub fn total_size(&self) -> usize {
@@ -6070,32 +5638,32 @@ impl AshWarChronicle {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn character_schema(&self) -> CharacterSchema {
+    pub fn player(&self) -> PlayerSchema {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        CharacterSchema::new_unchecked(self.0.slice(start..end))
+        PlayerSchema::new_unchecked(self.0.slice(start..end))
     }
-    pub fn location_schema(&self) -> LocationSchema {
+    pub fn scene(&self) -> SceneSchema {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        LocationSchema::new_unchecked(self.0.slice(start..end))
+        SceneSchema::new_unchecked(self.0.slice(start..end))
     }
-    pub fn date_schema(&self) -> DateSchema {
+    pub fn envionment(&self) -> EnvironmentSchema {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        DateSchema::new_unchecked(self.0.slice(start..end))
+        EnvironmentSchema::new_unchecked(self.0.slice(start..end))
     }
-    pub fn story_schema(&self) -> StorySchema {
+    pub fn chronicle(&self) -> ChronicleSchema {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         if self.has_extra_fields() {
             let end = molecule::unpack_number(&slice[20..]) as usize;
-            StorySchema::new_unchecked(self.0.slice(start..end))
+            ChronicleSchema::new_unchecked(self.0.slice(start..end))
         } else {
-            StorySchema::new_unchecked(self.0.slice(start..))
+            ChronicleSchema::new_unchecked(self.0.slice(start..))
         }
     }
     pub fn as_reader<'r>(&'r self) -> AshWarChronicleReader<'r> {
@@ -6125,10 +5693,10 @@ impl molecule::prelude::Entity for AshWarChronicle {
     }
     fn as_builder(self) -> Self::Builder {
         Self::new_builder()
-            .character_schema(self.character_schema())
-            .location_schema(self.location_schema())
-            .date_schema(self.date_schema())
-            .story_schema(self.story_schema())
+            .player(self.player())
+            .scene(self.scene())
+            .envionment(self.envionment())
+            .chronicle(self.chronicle())
     }
 }
 #[derive(Clone, Copy)]
@@ -6150,10 +5718,10 @@ impl<'r> ::core::fmt::Debug for AshWarChronicleReader<'r> {
 impl<'r> ::core::fmt::Display for AshWarChronicleReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
-        write!(f, "{}: {}", "character_schema", self.character_schema())?;
-        write!(f, ", {}: {}", "location_schema", self.location_schema())?;
-        write!(f, ", {}: {}", "date_schema", self.date_schema())?;
-        write!(f, ", {}: {}", "story_schema", self.story_schema())?;
+        write!(f, "{}: {}", "player", self.player())?;
+        write!(f, ", {}: {}", "scene", self.scene())?;
+        write!(f, ", {}: {}", "envionment", self.envionment())?;
+        write!(f, ", {}: {}", "chronicle", self.chronicle())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
             write!(f, ", .. ({} fields)", extra_count)?;
@@ -6179,32 +5747,32 @@ impl<'r> AshWarChronicleReader<'r> {
     pub fn has_extra_fields(&self) -> bool {
         Self::FIELD_COUNT != self.field_count()
     }
-    pub fn character_schema(&self) -> CharacterSchemaReader<'r> {
+    pub fn player(&self) -> PlayerSchemaReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[4..]) as usize;
         let end = molecule::unpack_number(&slice[8..]) as usize;
-        CharacterSchemaReader::new_unchecked(&self.as_slice()[start..end])
+        PlayerSchemaReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn location_schema(&self) -> LocationSchemaReader<'r> {
+    pub fn scene(&self) -> SceneSchemaReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[8..]) as usize;
         let end = molecule::unpack_number(&slice[12..]) as usize;
-        LocationSchemaReader::new_unchecked(&self.as_slice()[start..end])
+        SceneSchemaReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn date_schema(&self) -> DateSchemaReader<'r> {
+    pub fn envionment(&self) -> EnvironmentSchemaReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        DateSchemaReader::new_unchecked(&self.as_slice()[start..end])
+        EnvironmentSchemaReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn story_schema(&self) -> StorySchemaReader<'r> {
+    pub fn chronicle(&self) -> ChronicleSchemaReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         if self.has_extra_fields() {
             let end = molecule::unpack_number(&slice[20..]) as usize;
-            StorySchemaReader::new_unchecked(&self.as_slice()[start..end])
+            ChronicleSchemaReader::new_unchecked(&self.as_slice()[start..end])
         } else {
-            StorySchemaReader::new_unchecked(&self.as_slice()[start..])
+            ChronicleSchemaReader::new_unchecked(&self.as_slice()[start..])
         }
     }
 }
@@ -6254,36 +5822,36 @@ impl<'r> molecule::prelude::Reader<'r> for AshWarChronicleReader<'r> {
         if offsets.windows(2).any(|i| i[0] > i[1]) {
             return ve!(Self, OffsetsNotMatch);
         }
-        CharacterSchemaReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
-        LocationSchemaReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
-        DateSchemaReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
-        StorySchemaReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
+        PlayerSchemaReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
+        SceneSchemaReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
+        EnvironmentSchemaReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
+        ChronicleSchemaReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
         Ok(())
     }
 }
 #[derive(Clone, Debug, Default)]
 pub struct AshWarChronicleBuilder {
-    pub(crate) character_schema: CharacterSchema,
-    pub(crate) location_schema: LocationSchema,
-    pub(crate) date_schema: DateSchema,
-    pub(crate) story_schema: StorySchema,
+    pub(crate) player: PlayerSchema,
+    pub(crate) scene: SceneSchema,
+    pub(crate) envionment: EnvironmentSchema,
+    pub(crate) chronicle: ChronicleSchema,
 }
 impl AshWarChronicleBuilder {
     pub const FIELD_COUNT: usize = 4;
-    pub fn character_schema(mut self, v: CharacterSchema) -> Self {
-        self.character_schema = v;
+    pub fn player(mut self, v: PlayerSchema) -> Self {
+        self.player = v;
         self
     }
-    pub fn location_schema(mut self, v: LocationSchema) -> Self {
-        self.location_schema = v;
+    pub fn scene(mut self, v: SceneSchema) -> Self {
+        self.scene = v;
         self
     }
-    pub fn date_schema(mut self, v: DateSchema) -> Self {
-        self.date_schema = v;
+    pub fn envionment(mut self, v: EnvironmentSchema) -> Self {
+        self.envionment = v;
         self
     }
-    pub fn story_schema(mut self, v: StorySchema) -> Self {
-        self.story_schema = v;
+    pub fn chronicle(mut self, v: ChronicleSchema) -> Self {
+        self.chronicle = v;
         self
     }
 }
@@ -6292,30 +5860,30 @@ impl molecule::prelude::Builder for AshWarChronicleBuilder {
     const NAME: &'static str = "AshWarChronicleBuilder";
     fn expected_length(&self) -> usize {
         molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1)
-            + self.character_schema.as_slice().len()
-            + self.location_schema.as_slice().len()
-            + self.date_schema.as_slice().len()
-            + self.story_schema.as_slice().len()
+            + self.player.as_slice().len()
+            + self.scene.as_slice().len()
+            + self.envionment.as_slice().len()
+            + self.chronicle.as_slice().len()
     }
     fn write<W: molecule::io::Write>(&self, writer: &mut W) -> molecule::io::Result<()> {
         let mut total_size = molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1);
         let mut offsets = Vec::with_capacity(Self::FIELD_COUNT);
         offsets.push(total_size);
-        total_size += self.character_schema.as_slice().len();
+        total_size += self.player.as_slice().len();
         offsets.push(total_size);
-        total_size += self.location_schema.as_slice().len();
+        total_size += self.scene.as_slice().len();
         offsets.push(total_size);
-        total_size += self.date_schema.as_slice().len();
+        total_size += self.envionment.as_slice().len();
         offsets.push(total_size);
-        total_size += self.story_schema.as_slice().len();
+        total_size += self.chronicle.as_slice().len();
         writer.write_all(&molecule::pack_number(total_size as molecule::Number))?;
         for offset in offsets.into_iter() {
             writer.write_all(&molecule::pack_number(offset as molecule::Number))?;
         }
-        writer.write_all(self.character_schema.as_slice())?;
-        writer.write_all(self.location_schema.as_slice())?;
-        writer.write_all(self.date_schema.as_slice())?;
-        writer.write_all(self.story_schema.as_slice())?;
+        writer.write_all(self.player.as_slice())?;
+        writer.write_all(self.scene.as_slice())?;
+        writer.write_all(self.envionment.as_slice())?;
+        writer.write_all(self.chronicle.as_slice())?;
         Ok(())
     }
     fn build(&self) -> Self::Entity {
