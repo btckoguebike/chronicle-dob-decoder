@@ -32,12 +32,12 @@ pub enum Error {
     ParseDateBackgroundError,
     ParseEnvironmentEffectError,
 
-    ParseChroniclePlayerError,
-    ParseChronicleSceneError,
-    ParseChronicleEnvironomentError,
-    ParseChronicleTransitionError,
-    ParseChronicleClimaxError,
-    ParseChronicleEndingError,
+    ParseEventPlayerError,
+    ParseEventSceneError,
+    ParseEventContextError,
+    ParseEventTransitionError,
+    ParseEventClimaxError,
+    ParseEventEndingError,
 
     InvalidArgsLength,
     InvalidHexedDNAInArgs,

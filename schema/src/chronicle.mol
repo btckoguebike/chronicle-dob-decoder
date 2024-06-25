@@ -60,7 +60,7 @@ table SceneSchema {
     commodity: Pattern,
 }
 
-table EnvironmentSchema {
+table ContextSchema {
     adjective: Pattern,
     era: Pattern,
     time: Pattern,
@@ -69,10 +69,10 @@ table EnvironmentSchema {
     effect: Pattern,
 }
 
-table ChronicleSchema {
+table EventSchema {
     player: Pattern,
     scene: Pattern,
-    environment: Pattern,
+    context: Pattern,
     transition: Pattern,
     climax: Pattern,
     ending: Pattern,
@@ -81,6 +81,6 @@ table ChronicleSchema {
 table AshWarChronicle {
     player: PlayerSchema,
     scene: SceneSchema,
-    envionment: EnvironmentSchema,
-    chronicle: ChronicleSchema,
+    context: ContextSchema,
+    event: EventSchema,
 }

@@ -5,14 +5,14 @@ use alloc::{
     vec::{IntoIter, Vec},
 };
 use chronicle_schema::{
-    ChronicleSchema, EnvironmentSchema, Instruction, InstructionUnion, Pattern, PatternUnion,
-    PlayerSchema, PoolUnion, SceneSchema, Segment, VariableSegment,
+    ContextSchema, EventSchema, Instruction, InstructionUnion, Pattern, PatternUnion, PlayerSchema,
+    PoolUnion, SceneSchema, Segment, VariableSegment,
 };
 use serde_json::Value;
 
 use crate::{
     error::Error,
-    object::{Chronicle, Environment, Player, Scene},
+    object::{Context, Event, Player, Scene},
 };
 
 struct PoolSelector<T: Clone> {
@@ -273,18 +273,15 @@ pub fn decode_scene(scene: SceneSchema, mut dna_bytes: Vec<u8>) -> Result<Scene,
     })
 }
 
-pub fn decode_environment(
-    environment: EnvironmentSchema,
-    mut dna_bytes: Vec<u8>,
-) -> Result<Environment, Error> {
-    let adjective = decode_pattern(environment.adjective(), &mut dna_bytes)?;
-    let era = decode_pattern(environment.era(), &mut dna_bytes)?;
-    let time = decode_pattern(environment.time(), &mut dna_bytes)?;
-    let mode = decode_pattern(environment.mode(), &mut dna_bytes)?;
-    let rank = decode_pattern(environment.rank(), &mut dna_bytes)?;
-    let effect = decode_pattern(environment.effect(), &mut dna_bytes)?;
+pub fn decode_context(context: ContextSchema, mut dna_bytes: Vec<u8>) -> Result<Context, Error> {
+    let adjective = decode_pattern(context.adjective(), &mut dna_bytes)?;
+    let era = decode_pattern(context.era(), &mut dna_bytes)?;
+    let time = decode_pattern(context.time(), &mut dna_bytes)?;
+    let mode = decode_pattern(context.mode(), &mut dna_bytes)?;
+    let rank = decode_pattern(context.rank(), &mut dna_bytes)?;
+    let effect = decode_pattern(context.effect(), &mut dna_bytes)?;
 
-    Ok(Environment {
+    Ok(Context {
         adjective: parse_string!(adjective, ParseEnvironmentAjectiveError),
         era: parse_string!(era, ParseEnvironmentEraError),
         time: parse_string!(time, ParseEnvironmentTimeError),
@@ -294,16 +291,13 @@ pub fn decode_environment(
     })
 }
 
-pub fn decode_chronicle(
-    chronicle: ChronicleSchema,
-    mut dna_bytes: Vec<u8>,
-) -> Result<Chronicle, Error> {
-    let player = decode_pattern(chronicle.player(), &mut dna_bytes)?;
-    let scene = decode_pattern(chronicle.scene(), &mut dna_bytes)?;
-    let environment = decode_pattern(chronicle.environment(), &mut dna_bytes)?;
-    let transition = decode_pattern(chronicle.transition(), &mut dna_bytes)?;
-    let climax = decode_pattern(chronicle.climax(), &mut dna_bytes)?;
-    let ending = decode_pattern(chronicle.ending(), &mut dna_bytes)?;
+pub fn decode_event(event: EventSchema, mut dna_bytes: Vec<u8>) -> Result<Event, Error> {
+    let player = decode_pattern(event.player(), &mut dna_bytes)?;
+    let scene = decode_pattern(event.scene(), &mut dna_bytes)?;
+    let context = decode_pattern(event.context(), &mut dna_bytes)?;
+    let transition = decode_pattern(event.transition(), &mut dna_bytes)?;
+    let climax = decode_pattern(event.climax(), &mut dna_bytes)?;
+    let ending = decode_pattern(event.ending(), &mut dna_bytes)?;
 
     let handle = |value: &Value, error: Error| {
         let value = value.as_array().ok_or(error.clone())?;
@@ -315,18 +309,18 @@ pub fn decode_chronicle(
         }
     };
 
-    Ok(Chronicle {
-        player: parse_string_array!(player, ParseChroniclePlayerError, handle)
+    Ok(Event {
+        player: parse_string_array!(player, ParseEventPlayerError, handle)
             .try_into()
-            .map_err(|_| Error::ParseChroniclePlayerError)?,
-        scene: parse_string_array!(scene, ParseChronicleSceneError, handle)
+            .map_err(|_| Error::ParseEventPlayerError)?,
+        scene: parse_string_array!(scene, ParseEventSceneError, handle)
             .try_into()
-            .map_err(|_| Error::ParseChronicleSceneError)?,
-        environment: parse_string_array!(environment, ParseChronicleEnvironomentError, handle)
+            .map_err(|_| Error::ParseEventSceneError)?,
+        context: parse_string_array!(context, ParseEventContextError, handle)
             .try_into()
-            .map_err(|_| Error::ParseChronicleEnvironomentError)?,
-        transition: parse_string!(transition, ParseChronicleTransitionError),
-        climax: parse_string!(climax, ParseChronicleClimaxError),
-        ending: parse_string!(ending, ParseChronicleEndingError),
+            .map_err(|_| Error::ParseEventContextError)?,
+        transition: parse_string!(transition, ParseEventTransitionError),
+        climax: parse_string!(climax, ParseEventClimaxError),
+        ending: parse_string!(ending, ParseEventEndingError),
     })
 }

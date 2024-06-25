@@ -4821,8 +4821,8 @@ impl molecule::prelude::Builder for SceneSchemaBuilder {
     }
 }
 #[derive(Clone)]
-pub struct EnvironmentSchema(molecule::bytes::Bytes);
-impl ::core::fmt::LowerHex for EnvironmentSchema {
+pub struct ContextSchema(molecule::bytes::Bytes);
+impl ::core::fmt::LowerHex for ContextSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -4831,12 +4831,12 @@ impl ::core::fmt::LowerHex for EnvironmentSchema {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl ::core::fmt::Debug for EnvironmentSchema {
+impl ::core::fmt::Debug for ContextSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl ::core::fmt::Display for EnvironmentSchema {
+impl ::core::fmt::Display for ContextSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
         write!(f, "{}: {}", "adjective", self.adjective())?;
@@ -4852,13 +4852,13 @@ impl ::core::fmt::Display for EnvironmentSchema {
         write!(f, " }}")
     }
 }
-impl ::core::default::Default for EnvironmentSchema {
+impl ::core::default::Default for ContextSchema {
     fn default() -> Self {
         let v = molecule::bytes::Bytes::from_static(&Self::DEFAULT_VALUE);
-        EnvironmentSchema::new_unchecked(v)
+        ContextSchema::new_unchecked(v)
     }
 }
-impl EnvironmentSchema {
+impl ContextSchema {
     const DEFAULT_VALUE: [u8; 178] = [
         178, 0, 0, 0, 28, 0, 0, 0, 53, 0, 0, 0, 78, 0, 0, 0, 103, 0, 0, 0, 128, 0, 0, 0, 153, 0, 0,
         0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
@@ -4925,15 +4925,15 @@ impl EnvironmentSchema {
             Pattern::new_unchecked(self.0.slice(start..))
         }
     }
-    pub fn as_reader<'r>(&'r self) -> EnvironmentSchemaReader<'r> {
-        EnvironmentSchemaReader::new_unchecked(self.as_slice())
+    pub fn as_reader<'r>(&'r self) -> ContextSchemaReader<'r> {
+        ContextSchemaReader::new_unchecked(self.as_slice())
     }
 }
-impl molecule::prelude::Entity for EnvironmentSchema {
-    type Builder = EnvironmentSchemaBuilder;
-    const NAME: &'static str = "EnvironmentSchema";
+impl molecule::prelude::Entity for ContextSchema {
+    type Builder = ContextSchemaBuilder;
+    const NAME: &'static str = "ContextSchema";
     fn new_unchecked(data: molecule::bytes::Bytes) -> Self {
-        EnvironmentSchema(data)
+        ContextSchema(data)
     }
     fn as_bytes(&self) -> molecule::bytes::Bytes {
         self.0.clone()
@@ -4942,10 +4942,10 @@ impl molecule::prelude::Entity for EnvironmentSchema {
         &self.0[..]
     }
     fn from_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        EnvironmentSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
+        ContextSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
     }
     fn from_compatible_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        EnvironmentSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
+        ContextSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
     }
     fn new_builder() -> Self::Builder {
         ::core::default::Default::default()
@@ -4961,8 +4961,8 @@ impl molecule::prelude::Entity for EnvironmentSchema {
     }
 }
 #[derive(Clone, Copy)]
-pub struct EnvironmentSchemaReader<'r>(&'r [u8]);
-impl<'r> ::core::fmt::LowerHex for EnvironmentSchemaReader<'r> {
+pub struct ContextSchemaReader<'r>(&'r [u8]);
+impl<'r> ::core::fmt::LowerHex for ContextSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -4971,12 +4971,12 @@ impl<'r> ::core::fmt::LowerHex for EnvironmentSchemaReader<'r> {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl<'r> ::core::fmt::Debug for EnvironmentSchemaReader<'r> {
+impl<'r> ::core::fmt::Debug for ContextSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl<'r> ::core::fmt::Display for EnvironmentSchemaReader<'r> {
+impl<'r> ::core::fmt::Display for ContextSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
         write!(f, "{}: {}", "adjective", self.adjective())?;
@@ -4992,7 +4992,7 @@ impl<'r> ::core::fmt::Display for EnvironmentSchemaReader<'r> {
         write!(f, " }}")
     }
 }
-impl<'r> EnvironmentSchemaReader<'r> {
+impl<'r> ContextSchemaReader<'r> {
     pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
@@ -5051,14 +5051,14 @@ impl<'r> EnvironmentSchemaReader<'r> {
         }
     }
 }
-impl<'r> molecule::prelude::Reader<'r> for EnvironmentSchemaReader<'r> {
-    type Entity = EnvironmentSchema;
-    const NAME: &'static str = "EnvironmentSchemaReader";
+impl<'r> molecule::prelude::Reader<'r> for ContextSchemaReader<'r> {
+    type Entity = ContextSchema;
+    const NAME: &'static str = "ContextSchemaReader";
     fn to_entity(&self) -> Self::Entity {
         Self::Entity::new_unchecked(self.as_slice().to_owned().into())
     }
     fn new_unchecked(slice: &'r [u8]) -> Self {
-        EnvironmentSchemaReader(slice)
+        ContextSchemaReader(slice)
     }
     fn as_slice(&self) -> &'r [u8] {
         self.0
@@ -5107,7 +5107,7 @@ impl<'r> molecule::prelude::Reader<'r> for EnvironmentSchemaReader<'r> {
     }
 }
 #[derive(Clone, Debug, Default)]
-pub struct EnvironmentSchemaBuilder {
+pub struct ContextSchemaBuilder {
     pub(crate) adjective: Pattern,
     pub(crate) era: Pattern,
     pub(crate) time: Pattern,
@@ -5115,7 +5115,7 @@ pub struct EnvironmentSchemaBuilder {
     pub(crate) rank: Pattern,
     pub(crate) effect: Pattern,
 }
-impl EnvironmentSchemaBuilder {
+impl ContextSchemaBuilder {
     pub const FIELD_COUNT: usize = 6;
     pub fn adjective(mut self, v: Pattern) -> Self {
         self.adjective = v;
@@ -5142,9 +5142,9 @@ impl EnvironmentSchemaBuilder {
         self
     }
 }
-impl molecule::prelude::Builder for EnvironmentSchemaBuilder {
-    type Entity = EnvironmentSchema;
-    const NAME: &'static str = "EnvironmentSchemaBuilder";
+impl molecule::prelude::Builder for ContextSchemaBuilder {
+    type Entity = ContextSchema;
+    const NAME: &'static str = "ContextSchemaBuilder";
     fn expected_length(&self) -> usize {
         molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1)
             + self.adjective.as_slice().len()
@@ -5185,12 +5185,12 @@ impl molecule::prelude::Builder for EnvironmentSchemaBuilder {
         let mut inner = Vec::with_capacity(self.expected_length());
         self.write(&mut inner)
             .unwrap_or_else(|_| panic!("{} build should be ok", Self::NAME));
-        EnvironmentSchema::new_unchecked(inner.into())
+        ContextSchema::new_unchecked(inner.into())
     }
 }
 #[derive(Clone)]
-pub struct ChronicleSchema(molecule::bytes::Bytes);
-impl ::core::fmt::LowerHex for ChronicleSchema {
+pub struct EventSchema(molecule::bytes::Bytes);
+impl ::core::fmt::LowerHex for EventSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -5199,17 +5199,17 @@ impl ::core::fmt::LowerHex for ChronicleSchema {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl ::core::fmt::Debug for ChronicleSchema {
+impl ::core::fmt::Debug for EventSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl ::core::fmt::Display for ChronicleSchema {
+impl ::core::fmt::Display for EventSchema {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
         write!(f, "{}: {}", "player", self.player())?;
         write!(f, ", {}: {}", "scene", self.scene())?;
-        write!(f, ", {}: {}", "environment", self.environment())?;
+        write!(f, ", {}: {}", "context", self.context())?;
         write!(f, ", {}: {}", "transition", self.transition())?;
         write!(f, ", {}: {}", "climax", self.climax())?;
         write!(f, ", {}: {}", "ending", self.ending())?;
@@ -5220,13 +5220,13 @@ impl ::core::fmt::Display for ChronicleSchema {
         write!(f, " }}")
     }
 }
-impl ::core::default::Default for ChronicleSchema {
+impl ::core::default::Default for EventSchema {
     fn default() -> Self {
         let v = molecule::bytes::Bytes::from_static(&Self::DEFAULT_VALUE);
-        ChronicleSchema::new_unchecked(v)
+        EventSchema::new_unchecked(v)
     }
 }
-impl ChronicleSchema {
+impl EventSchema {
     const DEFAULT_VALUE: [u8; 178] = [
         178, 0, 0, 0, 28, 0, 0, 0, 53, 0, 0, 0, 78, 0, 0, 0, 103, 0, 0, 0, 128, 0, 0, 0, 153, 0, 0,
         0, 0, 0, 0, 0, 21, 0, 0, 0, 12, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
@@ -5265,7 +5265,7 @@ impl ChronicleSchema {
         let end = molecule::unpack_number(&slice[12..]) as usize;
         Pattern::new_unchecked(self.0.slice(start..end))
     }
-    pub fn environment(&self) -> Pattern {
+    pub fn context(&self) -> Pattern {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
@@ -5293,15 +5293,15 @@ impl ChronicleSchema {
             Pattern::new_unchecked(self.0.slice(start..))
         }
     }
-    pub fn as_reader<'r>(&'r self) -> ChronicleSchemaReader<'r> {
-        ChronicleSchemaReader::new_unchecked(self.as_slice())
+    pub fn as_reader<'r>(&'r self) -> EventSchemaReader<'r> {
+        EventSchemaReader::new_unchecked(self.as_slice())
     }
 }
-impl molecule::prelude::Entity for ChronicleSchema {
-    type Builder = ChronicleSchemaBuilder;
-    const NAME: &'static str = "ChronicleSchema";
+impl molecule::prelude::Entity for EventSchema {
+    type Builder = EventSchemaBuilder;
+    const NAME: &'static str = "EventSchema";
     fn new_unchecked(data: molecule::bytes::Bytes) -> Self {
-        ChronicleSchema(data)
+        EventSchema(data)
     }
     fn as_bytes(&self) -> molecule::bytes::Bytes {
         self.0.clone()
@@ -5310,10 +5310,10 @@ impl molecule::prelude::Entity for ChronicleSchema {
         &self.0[..]
     }
     fn from_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        ChronicleSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
+        EventSchemaReader::from_slice(slice).map(|reader| reader.to_entity())
     }
     fn from_compatible_slice(slice: &[u8]) -> molecule::error::VerificationResult<Self> {
-        ChronicleSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
+        EventSchemaReader::from_compatible_slice(slice).map(|reader| reader.to_entity())
     }
     fn new_builder() -> Self::Builder {
         ::core::default::Default::default()
@@ -5322,15 +5322,15 @@ impl molecule::prelude::Entity for ChronicleSchema {
         Self::new_builder()
             .player(self.player())
             .scene(self.scene())
-            .environment(self.environment())
+            .context(self.context())
             .transition(self.transition())
             .climax(self.climax())
             .ending(self.ending())
     }
 }
 #[derive(Clone, Copy)]
-pub struct ChronicleSchemaReader<'r>(&'r [u8]);
-impl<'r> ::core::fmt::LowerHex for ChronicleSchemaReader<'r> {
+pub struct EventSchemaReader<'r>(&'r [u8]);
+impl<'r> ::core::fmt::LowerHex for EventSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         use molecule::hex_string;
         if f.alternate() {
@@ -5339,17 +5339,17 @@ impl<'r> ::core::fmt::LowerHex for ChronicleSchemaReader<'r> {
         write!(f, "{}", hex_string(self.as_slice()))
     }
 }
-impl<'r> ::core::fmt::Debug for ChronicleSchemaReader<'r> {
+impl<'r> ::core::fmt::Debug for EventSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{}({:#x})", Self::NAME, self)
     }
 }
-impl<'r> ::core::fmt::Display for ChronicleSchemaReader<'r> {
+impl<'r> ::core::fmt::Display for EventSchemaReader<'r> {
     fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
         write!(f, "{} {{ ", Self::NAME)?;
         write!(f, "{}: {}", "player", self.player())?;
         write!(f, ", {}: {}", "scene", self.scene())?;
-        write!(f, ", {}: {}", "environment", self.environment())?;
+        write!(f, ", {}: {}", "context", self.context())?;
         write!(f, ", {}: {}", "transition", self.transition())?;
         write!(f, ", {}: {}", "climax", self.climax())?;
         write!(f, ", {}: {}", "ending", self.ending())?;
@@ -5360,7 +5360,7 @@ impl<'r> ::core::fmt::Display for ChronicleSchemaReader<'r> {
         write!(f, " }}")
     }
 }
-impl<'r> ChronicleSchemaReader<'r> {
+impl<'r> EventSchemaReader<'r> {
     pub const FIELD_COUNT: usize = 6;
     pub fn total_size(&self) -> usize {
         molecule::unpack_number(self.as_slice()) as usize
@@ -5390,7 +5390,7 @@ impl<'r> ChronicleSchemaReader<'r> {
         let end = molecule::unpack_number(&slice[12..]) as usize;
         PatternReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn environment(&self) -> PatternReader<'r> {
+    pub fn context(&self) -> PatternReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
@@ -5419,14 +5419,14 @@ impl<'r> ChronicleSchemaReader<'r> {
         }
     }
 }
-impl<'r> molecule::prelude::Reader<'r> for ChronicleSchemaReader<'r> {
-    type Entity = ChronicleSchema;
-    const NAME: &'static str = "ChronicleSchemaReader";
+impl<'r> molecule::prelude::Reader<'r> for EventSchemaReader<'r> {
+    type Entity = EventSchema;
+    const NAME: &'static str = "EventSchemaReader";
     fn to_entity(&self) -> Self::Entity {
         Self::Entity::new_unchecked(self.as_slice().to_owned().into())
     }
     fn new_unchecked(slice: &'r [u8]) -> Self {
-        ChronicleSchemaReader(slice)
+        EventSchemaReader(slice)
     }
     fn as_slice(&self) -> &'r [u8] {
         self.0
@@ -5475,15 +5475,15 @@ impl<'r> molecule::prelude::Reader<'r> for ChronicleSchemaReader<'r> {
     }
 }
 #[derive(Clone, Debug, Default)]
-pub struct ChronicleSchemaBuilder {
+pub struct EventSchemaBuilder {
     pub(crate) player: Pattern,
     pub(crate) scene: Pattern,
-    pub(crate) environment: Pattern,
+    pub(crate) context: Pattern,
     pub(crate) transition: Pattern,
     pub(crate) climax: Pattern,
     pub(crate) ending: Pattern,
 }
-impl ChronicleSchemaBuilder {
+impl EventSchemaBuilder {
     pub const FIELD_COUNT: usize = 6;
     pub fn player(mut self, v: Pattern) -> Self {
         self.player = v;
@@ -5493,8 +5493,8 @@ impl ChronicleSchemaBuilder {
         self.scene = v;
         self
     }
-    pub fn environment(mut self, v: Pattern) -> Self {
-        self.environment = v;
+    pub fn context(mut self, v: Pattern) -> Self {
+        self.context = v;
         self
     }
     pub fn transition(mut self, v: Pattern) -> Self {
@@ -5510,14 +5510,14 @@ impl ChronicleSchemaBuilder {
         self
     }
 }
-impl molecule::prelude::Builder for ChronicleSchemaBuilder {
-    type Entity = ChronicleSchema;
-    const NAME: &'static str = "ChronicleSchemaBuilder";
+impl molecule::prelude::Builder for EventSchemaBuilder {
+    type Entity = EventSchema;
+    const NAME: &'static str = "EventSchemaBuilder";
     fn expected_length(&self) -> usize {
         molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1)
             + self.player.as_slice().len()
             + self.scene.as_slice().len()
-            + self.environment.as_slice().len()
+            + self.context.as_slice().len()
             + self.transition.as_slice().len()
             + self.climax.as_slice().len()
             + self.ending.as_slice().len()
@@ -5530,7 +5530,7 @@ impl molecule::prelude::Builder for ChronicleSchemaBuilder {
         offsets.push(total_size);
         total_size += self.scene.as_slice().len();
         offsets.push(total_size);
-        total_size += self.environment.as_slice().len();
+        total_size += self.context.as_slice().len();
         offsets.push(total_size);
         total_size += self.transition.as_slice().len();
         offsets.push(total_size);
@@ -5543,7 +5543,7 @@ impl molecule::prelude::Builder for ChronicleSchemaBuilder {
         }
         writer.write_all(self.player.as_slice())?;
         writer.write_all(self.scene.as_slice())?;
-        writer.write_all(self.environment.as_slice())?;
+        writer.write_all(self.context.as_slice())?;
         writer.write_all(self.transition.as_slice())?;
         writer.write_all(self.climax.as_slice())?;
         writer.write_all(self.ending.as_slice())?;
@@ -5553,7 +5553,7 @@ impl molecule::prelude::Builder for ChronicleSchemaBuilder {
         let mut inner = Vec::with_capacity(self.expected_length());
         self.write(&mut inner)
             .unwrap_or_else(|_| panic!("{} build should be ok", Self::NAME));
-        ChronicleSchema::new_unchecked(inner.into())
+        EventSchema::new_unchecked(inner.into())
     }
 }
 #[derive(Clone)]
@@ -5577,8 +5577,8 @@ impl ::core::fmt::Display for AshWarChronicle {
         write!(f, "{} {{ ", Self::NAME)?;
         write!(f, "{}: {}", "player", self.player())?;
         write!(f, ", {}: {}", "scene", self.scene())?;
-        write!(f, ", {}: {}", "envionment", self.envionment())?;
-        write!(f, ", {}: {}", "chronicle", self.chronicle())?;
+        write!(f, ", {}: {}", "context", self.context())?;
+        write!(f, ", {}: {}", "event", self.event())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
             write!(f, ", .. ({} fields)", extra_count)?;
@@ -5650,20 +5650,20 @@ impl AshWarChronicle {
         let end = molecule::unpack_number(&slice[12..]) as usize;
         SceneSchema::new_unchecked(self.0.slice(start..end))
     }
-    pub fn envionment(&self) -> EnvironmentSchema {
+    pub fn context(&self) -> ContextSchema {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        EnvironmentSchema::new_unchecked(self.0.slice(start..end))
+        ContextSchema::new_unchecked(self.0.slice(start..end))
     }
-    pub fn chronicle(&self) -> ChronicleSchema {
+    pub fn event(&self) -> EventSchema {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         if self.has_extra_fields() {
             let end = molecule::unpack_number(&slice[20..]) as usize;
-            ChronicleSchema::new_unchecked(self.0.slice(start..end))
+            EventSchema::new_unchecked(self.0.slice(start..end))
         } else {
-            ChronicleSchema::new_unchecked(self.0.slice(start..))
+            EventSchema::new_unchecked(self.0.slice(start..))
         }
     }
     pub fn as_reader<'r>(&'r self) -> AshWarChronicleReader<'r> {
@@ -5695,8 +5695,8 @@ impl molecule::prelude::Entity for AshWarChronicle {
         Self::new_builder()
             .player(self.player())
             .scene(self.scene())
-            .envionment(self.envionment())
-            .chronicle(self.chronicle())
+            .context(self.context())
+            .event(self.event())
     }
 }
 #[derive(Clone, Copy)]
@@ -5720,8 +5720,8 @@ impl<'r> ::core::fmt::Display for AshWarChronicleReader<'r> {
         write!(f, "{} {{ ", Self::NAME)?;
         write!(f, "{}: {}", "player", self.player())?;
         write!(f, ", {}: {}", "scene", self.scene())?;
-        write!(f, ", {}: {}", "envionment", self.envionment())?;
-        write!(f, ", {}: {}", "chronicle", self.chronicle())?;
+        write!(f, ", {}: {}", "context", self.context())?;
+        write!(f, ", {}: {}", "event", self.event())?;
         let extra_count = self.count_extra_fields();
         if extra_count != 0 {
             write!(f, ", .. ({} fields)", extra_count)?;
@@ -5759,20 +5759,20 @@ impl<'r> AshWarChronicleReader<'r> {
         let end = molecule::unpack_number(&slice[12..]) as usize;
         SceneSchemaReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn envionment(&self) -> EnvironmentSchemaReader<'r> {
+    pub fn context(&self) -> ContextSchemaReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[12..]) as usize;
         let end = molecule::unpack_number(&slice[16..]) as usize;
-        EnvironmentSchemaReader::new_unchecked(&self.as_slice()[start..end])
+        ContextSchemaReader::new_unchecked(&self.as_slice()[start..end])
     }
-    pub fn chronicle(&self) -> ChronicleSchemaReader<'r> {
+    pub fn event(&self) -> EventSchemaReader<'r> {
         let slice = self.as_slice();
         let start = molecule::unpack_number(&slice[16..]) as usize;
         if self.has_extra_fields() {
             let end = molecule::unpack_number(&slice[20..]) as usize;
-            ChronicleSchemaReader::new_unchecked(&self.as_slice()[start..end])
+            EventSchemaReader::new_unchecked(&self.as_slice()[start..end])
         } else {
-            ChronicleSchemaReader::new_unchecked(&self.as_slice()[start..])
+            EventSchemaReader::new_unchecked(&self.as_slice()[start..])
         }
     }
 }
@@ -5824,8 +5824,8 @@ impl<'r> molecule::prelude::Reader<'r> for AshWarChronicleReader<'r> {
         }
         PlayerSchemaReader::verify(&slice[offsets[0]..offsets[1]], compatible)?;
         SceneSchemaReader::verify(&slice[offsets[1]..offsets[2]], compatible)?;
-        EnvironmentSchemaReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
-        ChronicleSchemaReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
+        ContextSchemaReader::verify(&slice[offsets[2]..offsets[3]], compatible)?;
+        EventSchemaReader::verify(&slice[offsets[3]..offsets[4]], compatible)?;
         Ok(())
     }
 }
@@ -5833,8 +5833,8 @@ impl<'r> molecule::prelude::Reader<'r> for AshWarChronicleReader<'r> {
 pub struct AshWarChronicleBuilder {
     pub(crate) player: PlayerSchema,
     pub(crate) scene: SceneSchema,
-    pub(crate) envionment: EnvironmentSchema,
-    pub(crate) chronicle: ChronicleSchema,
+    pub(crate) context: ContextSchema,
+    pub(crate) event: EventSchema,
 }
 impl AshWarChronicleBuilder {
     pub const FIELD_COUNT: usize = 4;
@@ -5846,12 +5846,12 @@ impl AshWarChronicleBuilder {
         self.scene = v;
         self
     }
-    pub fn envionment(mut self, v: EnvironmentSchema) -> Self {
-        self.envionment = v;
+    pub fn context(mut self, v: ContextSchema) -> Self {
+        self.context = v;
         self
     }
-    pub fn chronicle(mut self, v: ChronicleSchema) -> Self {
-        self.chronicle = v;
+    pub fn event(mut self, v: EventSchema) -> Self {
+        self.event = v;
         self
     }
 }
@@ -5862,8 +5862,8 @@ impl molecule::prelude::Builder for AshWarChronicleBuilder {
         molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1)
             + self.player.as_slice().len()
             + self.scene.as_slice().len()
-            + self.envionment.as_slice().len()
-            + self.chronicle.as_slice().len()
+            + self.context.as_slice().len()
+            + self.event.as_slice().len()
     }
     fn write<W: molecule::io::Write>(&self, writer: &mut W) -> molecule::io::Result<()> {
         let mut total_size = molecule::NUMBER_SIZE * (Self::FIELD_COUNT + 1);
@@ -5873,17 +5873,17 @@ impl molecule::prelude::Builder for AshWarChronicleBuilder {
         offsets.push(total_size);
         total_size += self.scene.as_slice().len();
         offsets.push(total_size);
-        total_size += self.envionment.as_slice().len();
+        total_size += self.context.as_slice().len();
         offsets.push(total_size);
-        total_size += self.chronicle.as_slice().len();
+        total_size += self.event.as_slice().len();
         writer.write_all(&molecule::pack_number(total_size as molecule::Number))?;
         for offset in offsets.into_iter() {
             writer.write_all(&molecule::pack_number(offset as molecule::Number))?;
         }
         writer.write_all(self.player.as_slice())?;
         writer.write_all(self.scene.as_slice())?;
-        writer.write_all(self.envionment.as_slice())?;
-        writer.write_all(self.chronicle.as_slice())?;
+        writer.write_all(self.context.as_slice())?;
+        writer.write_all(self.event.as_slice())?;
         Ok(())
     }
     fn build(&self) -> Self::Entity {

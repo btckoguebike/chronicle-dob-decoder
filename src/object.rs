@@ -75,14 +75,14 @@ pub struct Player {
 }
 
 impl From<Player> for Vec<ParsedDNA> {
-    fn from(player: Player) -> Self {
+    fn from(value: Player) -> Self {
         vec![
-            parse_single!(player, adjective, String),
-            parse_single!(player, name, String),
-            parse_single!(player, profession, String),
-            parse_single!(player, power, Number),
-            parse_single!(player, gold, Number),
-            parse_multiple!(player, card, String),
+            parse_single!(value, adjective, String),
+            parse_single!(value, name, String),
+            parse_single!(value, profession, String),
+            parse_single!(value, power, Number),
+            parse_single!(value, gold, Number),
+            parse_multiple!(value, card, String),
         ]
     }
 }
@@ -98,20 +98,20 @@ pub struct Scene {
 }
 
 impl From<Scene> for Vec<ParsedDNA> {
-    fn from(scene: Scene) -> Self {
+    fn from(value: Scene) -> Self {
         vec![
-            parse_single!(scene, name, String),
-            parse_single!(scene, attribute, String),
-            parse_single!(scene, operation, String),
-            parse_single!(scene, score, Number),
-            parse_single!(scene, difficulty, Number),
-            parse_multiple!(scene, commodity, String),
+            parse_single!(value, name, String),
+            parse_single!(value, attribute, String),
+            parse_single!(value, operation, String),
+            parse_single!(value, score, Number),
+            parse_single!(value, difficulty, Number),
+            parse_multiple!(value, commodity, String),
         ]
     }
 }
 
 #[cfg_attr(test, derive(Debug))]
-pub struct Environment {
+pub struct Context {
     pub adjective: String,
     pub era: String,
     pub time: String,
@@ -120,31 +120,31 @@ pub struct Environment {
     pub effect: Vec<String>,
 }
 
-impl From<Environment> for Vec<ParsedDNA> {
-    fn from(environment: Environment) -> Self {
+impl From<Context> for Vec<ParsedDNA> {
+    fn from(value: Context) -> Self {
         vec![
-            parse_single!(environment, adjective, String),
-            parse_single!(environment, era, String),
-            parse_single!(environment, time, String),
-            parse_single!(environment, mode, String),
-            parse_single!(environment, rank, Number),
-            parse_multiple!(environment, effect, String),
+            parse_single!(value, adjective, String),
+            parse_single!(value, era, String),
+            parse_single!(value, time, String),
+            parse_single!(value, mode, String),
+            parse_single!(value, rank, Number),
+            parse_multiple!(value, effect, String),
         ]
     }
 }
 
 #[cfg_attr(test, derive(Debug))]
-pub struct Chronicle {
+pub struct Event {
     pub player: [Option<String>; 3],
     pub scene: [Option<String>; 3],
-    pub environment: [Option<String>; 3],
+    pub context: [Option<String>; 3],
     pub transition: String,
     pub climax: String,
     pub ending: String,
 }
 
-impl From<Chronicle> for Vec<ParsedDNA> {
-    fn from(value: Chronicle) -> Self {
+impl From<Event> for Vec<ParsedDNA> {
+    fn from(value: Event) -> Self {
         vec![
             parse_single!(value, player, String, |v: [Option<String>; 3]| v
                 .map(|value| value.unwrap_or("_".to_string()))
@@ -152,7 +152,7 @@ impl From<Chronicle> for Vec<ParsedDNA> {
             parse_single!(value, scene, String, |v: [Option<String>; 3]| v
                 .map(|value| value.unwrap_or("_".to_string()))
                 .join("|")),
-            parse_single!(value, environment, String, |v: [Option<String>; 3]| v
+            parse_single!(value, context, String, |v: [Option<String>; 3]| v
                 .map(|value| value.unwrap_or("_".to_string()))
                 .join("|")),
             parse_single!(value, transition, String),

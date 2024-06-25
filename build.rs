@@ -141,9 +141,9 @@ pub fn main() {
     );
 
     // gnerate `date` module
-    let environment = parse_schema_object!(
-        EnvironmentSchema,
-        environment,
+    let context = parse_schema_object!(
+        ContextSchema,
+        context,
         (adjective, era, time, mode, rank, effect)
     );
 
@@ -155,18 +155,18 @@ pub fn main() {
     );
 
     // gnerate `story` module
-    let chronicle = parse_schema_object!(
-        ChronicleSchema,
-        chronicle,
-        (player, scene, environment, transition, climax, ending)
+    let event = parse_schema_object!(
+        EventSchema,
+        event,
+        (player, scene, context, transition, climax, ending)
     );
 
     // generate `generated.rs`
     let mol_chronicle = gen::AshWarChronicle::new_builder()
         .player(player)
-        .envionment(environment)
+        .context(context)
         .scene(scene)
-        .chronicle(chronicle)
+        .event(event)
         .build();
     let mol_bytes = mol_chronicle.as_slice();
     let file_content = format!(

@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use chronicle_schema::AshWarChronicle;
 use molecule::prelude::Entity;
 
-use crate::decoder::{decode_chronicle, decode_environment, decode_player, decode_scene};
+use crate::decoder::{decode_context, decode_event, decode_player, decode_scene};
 use crate::error::Error;
 use crate::generated::MOL_CHRONICLE_SCHEMA;
 use crate::object::ParsedDNA;
@@ -12,8 +12,8 @@ use crate::object::ParsedDNA;
 enum ObjectType {
     Player,
     Scene,
-    Environment,
-    Chronicle,
+    Context,
+    Event,
 }
 
 impl From<u8> for ObjectType {
@@ -21,8 +21,8 @@ impl From<u8> for ObjectType {
         match value % 4 {
             0 => Self::Player,
             1 => Self::Scene,
-            2 => Self::Environment,
-            3 => Self::Chronicle,
+            2 => Self::Context,
+            3 => Self::Event,
             _ => unreachable!(),
         }
     }
@@ -62,13 +62,13 @@ pub fn dobs_parse_parameters(args: Vec<&[u8]>) -> Result<Parameters, Error> {
 }
 
 pub fn dobs_decode(mut dna: Vec<u8>) -> Result<Vec<u8>, Error> {
-    let awc =
+    let chronicle =
         AshWarChronicle::from_compatible_slice(&MOL_CHRONICLE_SCHEMA).expect("chronicle init");
     let result: Vec<ParsedDNA> = match ObjectType::from(dna.remove(0)) {
-        ObjectType::Player => decode_player(awc.player(), dna)?.into(),
-        ObjectType::Scene => decode_scene(awc.scene(), dna)?.into(),
-        ObjectType::Environment => decode_environment(awc.envionment(), dna)?.into(),
-        ObjectType::Chronicle => decode_chronicle(awc.chronicle(), dna)?.into(),
+        ObjectType::Player => decode_player(chronicle.player(), dna)?.into(),
+        ObjectType::Scene => decode_scene(chronicle.scene(), dna)?.into(),
+        ObjectType::Context => decode_context(chronicle.context(), dna)?.into(),
+        ObjectType::Event => decode_event(chronicle.event(), dna)?.into(),
     };
     Ok(serde_json::to_string(&result)
         .expect("encode result")
@@ -79,24 +79,24 @@ pub fn dobs_decode(mut dna: Vec<u8>) -> Result<Vec<u8>, Error> {
 pub fn dobs_check_composable(dna_set: [Vec<u8>; 4]) -> Result<bool, Error> {
     let mut player = None;
     let mut scene = None;
-    let mut environment = None;
-    let mut chronicle = None;
+    let mut context = None;
+    let mut event = None;
 
-    let awc =
+    let chronicle =
         AshWarChronicle::from_compatible_slice(&MOL_CHRONICLE_SCHEMA).expect("chronicle init");
     dna_set.into_iter().try_for_each(|mut dna| {
         match ObjectType::from(dna.remove(0)) {
             ObjectType::Player => {
-                player = Some(decode_player(awc.player(), dna)?);
+                player = Some(decode_player(chronicle.player(), dna)?);
             }
             ObjectType::Scene => {
-                scene = Some(decode_scene(awc.scene(), dna)?);
+                scene = Some(decode_scene(chronicle.scene(), dna)?);
             }
-            ObjectType::Environment => {
-                environment = Some(decode_environment(awc.envionment(), dna)?);
+            ObjectType::Context => {
+                context = Some(decode_context(chronicle.context(), dna)?);
             }
-            ObjectType::Chronicle => {
-                chronicle = Some(decode_chronicle(awc.chronicle(), dna)?);
+            ObjectType::Event => {
+                event = Some(decode_event(chronicle.event(), dna)?);
             }
         };
         Result::<_, Error>::Ok(())
@@ -104,7 +104,7 @@ pub fn dobs_check_composable(dna_set: [Vec<u8>; 4]) -> Result<bool, Error> {
 
     // Check if all objects are present
     let (Some(player), Some(scene), Some(environment), Some(chronicle)) =
-        (player, scene, environment, chronicle)
+        (player, scene, context, event)
     else {
         return Ok(false);
     };
@@ -153,7 +153,7 @@ pub fn dobs_check_composable(dna_set: [Vec<u8>; 4]) -> Result<bool, Error> {
 
     // Check if Date is combinable
     let mismatch = chronicle
-        .environment
+        .context
         .into_iter()
         .enumerate()
         .any(|(i, ingredient)| {
